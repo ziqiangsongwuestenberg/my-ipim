@@ -1,0 +1,38 @@
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+### Build output ###
+/build/
+target/
+
+### Logs ###
+*.log
+
+### OS files ###
+.DS_Store
+Thumbs.db
+
+### Environment / secrets ###
+.env
+.env.*
+application.properties
+application.yml
+
+### Local overrides ###
+application-local.properties
+application-local.yml
+
+### Docker ###
+*.pid
+
+### Test reports ###
+/test-output/
+/reports/
+
+### Temporary files ###
+*.tmp
+*.swp
