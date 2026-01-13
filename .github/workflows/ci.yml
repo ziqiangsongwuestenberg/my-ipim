@@ -43,3 +43,9 @@ jobs:
           SPRING_DATASOURCE_USERNAME: user
           SPRING_DATASOURCE_PASSWORD: user
         run: ./gradlew clean test build
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-ipim-jar
+          path: build/libs/*.jar
