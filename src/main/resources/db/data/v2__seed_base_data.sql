@@ -3,18 +3,55 @@
 -- delete from article_av;
 -- delete from attribute_value;
 -- delete from attribute;
- delete from category_node;
- delete from article;
+-- delete from category_node;
+-- delete from article;
 
 
 -- 1, Articles
 
 insert into article(client, article_type, article_no, product_no, deleted, status1, status2, status3, status4, creation_time, update_time, creation_user, update_user)
 values
-(12,'Product', 'P-1001', 'PRD-1001', false, 1, 1, 1, 1, now(), now(), 'system', 'system'),
-(12,'Article', 'A-2001', 'PRD-1001', false, 2, 1, 1, 1, now(), now(), 'system', 'system'),
-(13,'Article', 'A-2002', 'PRD-1002', false, 3, 1, 1, 1, now(), now(), 'system', 'system')
-on conflict (article_no) do nothing;
+    (12,'Product','P-1001','PRD-1001',false,1,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1002','PRD-1002',false,1,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1003','PRD-1003',false,1,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1004','PRD-1004',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1005','PRD-1005',false,3,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1006','PRD-1006',false,1,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1007','PRD-1007',false,1,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1008','PRD-1008',false,1,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1009','PRD-1009',false,1,1,1,1,now(),now(),'system','system'),
+    (12,'Product','P-1010','PRD-1010',false,1,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100101','PRD-1001',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100102','PRD-1001',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100201','PRD-1002',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100202','PRD-1002',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100301','PRD-1003',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100302','PRD-1003',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100401','PRD-1004',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100402','PRD-1004',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100501','PRD-1005',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100502','PRD-1005',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100601','PRD-1006',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100602','PRD-1006',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100701','PRD-1007',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100702','PRD-1007',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100801','PRD-1008',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100802','PRD-1008',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-100901','PRD-1009',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-100902','PRD-1009',false,2,1,1,1,now(),now(),'system','system'),
+
+    (12,'Article','A-101001','PRD-1010',false,2,1,1,1,now(),now(),'system','system'),
+    (12,'Article','A-101002','PRD-1010',false,2,1,1,1,now(),now(),'system','system')
+    on conflict (article_no, client) do nothing;
 
 -- 2, Attribute
 
@@ -40,38 +77,170 @@ values
 -- Multi-value attributes
 ('features',             'Features',               'Vehicle feature list',                      'STRING',  null,     true,  false, false, 'seed', 'seed'),
 ('option_codes',         'Option Codes',            'Optional equipment codes',                  'STRING',  null,     true,  false, false, 'seed', 'seed')
+    on conflict (identifier) do nothing;
 
-on conflict (identifier) do nothing;
 
 
--- 3,  Category Node
+--3, article_av (here I change use a function to fill the data, just for showing another way. In real projects I will maintain consistency.)
+create or replace function fill_default_article_av(
+    p_client int,
+    p_user varchar default 'system'
+)
+returns void
+language plpgsql
+as $$
+declare
+    v_attr_vin          bigint;
+    v_attr_available_to bigint;
+    v_attr_length_mm    bigint;
+begin
+    --  resolve attribute ids once
+select id into v_attr_vin
+from attribute
+where identifier = 'vin'
+  and deleted = false;
 
--- 3.1  root node
+select id into v_attr_available_to
+from attribute
+where identifier = 'available_to'
+  and deleted = false;
+
+select id into v_attr_length_mm
+from attribute
+where identifier = 'length_mm'
+  and deleted = false;
+
+if v_attr_vin is null
+       or v_attr_available_to is null
+       or v_attr_length_mm is null then
+        raise exception 'Required attributes missing: vin=% available_to=% length_mm=%',
+            v_attr_vin, v_attr_available_to, v_attr_length_mm;
+end if;
+
+    --  VIN (STRING -> value_text)
+insert into article_av(
+    client,
+    article_id,
+    attribute_id,
+    value_index,
+    value_text,
+    deleted,
+    creation_time,
+    update_time,
+    creation_user,
+    update_user
+)
+select
+    a.client,
+    a.id,
+    v_attr_vin,
+    0,
+    'VIN-' || a.article_no,
+    false,
+    now(),
+    now(),
+    p_user,
+    p_user
+from article a
+where a.client = p_client
+  and a.deleted = false
+    on conflict (client, article_id, attribute_id, value_index) do nothing;
+
+--  available_to (DATE -> value_date)
+insert into article_av(
+    client,
+    article_id,
+    attribute_id,
+    value_index,
+    value_date,
+    deleted,
+    creation_time,
+    update_time,
+    creation_user,
+    update_user
+)
+select
+    a.client,
+    a.id,
+    v_attr_available_to,
+    0,
+    (current_date + 365),   -- 你也可以改成 current_date + interval '1 year'
+    false,
+    now(),
+    now(),
+    p_user,
+    p_user
+from article a
+where a.client = p_client
+  and a.deleted = false
+    on conflict (client, article_id, attribute_id, value_index) do nothing;
+
+--  length_mm (NUMBER -> value_num)
+insert into article_av(
+    client,
+    article_id,
+    attribute_id,
+    value_index,
+    value_num,
+    deleted,
+    creation_time,
+    update_time,
+    creation_user,
+    update_user
+)
+select
+    a.client,
+    a.id,
+    v_attr_length_mm,
+    0,
+    (4500 + (a.id % 300))::numeric(18,6),
+    false,
+    now(),
+    now(),
+    p_user,
+    p_user
+from article a
+where a.client = p_client
+  and a.deleted = false
+    on conflict (client, article_id, attribute_id, value_index) do nothing;
+end;
+$$;
+
+select fill_default_article_av(12);
+
+
+-- 4,  Category Node
+
+-- 4.1  root node
 insert into category_node(id, root_node, node_identifier, parent_node, name, level_no, sort_no, hierarchy_path, deleted, creation_time, update_time, creation_user, update_user)
-values (1, 1, 'root', null, 'Root', 0, 0, '/root', false, now(), now(), 'system', 'system');
+values (1, 1, 'root', null, 'Root', 0, 0, '/root', false, now(), now(), 'system', 'system') on conflict (root_node, node_identifier) do nothing;
 
 select pg_get_serial_sequence('category_node', 'id');
 select setval('public.category_node_id_seq', 1, true); --then nextval() return 2
 
--- 3.2  root node id
+-- 4.2  root node id
 -- select id from category_node where node_identifier='root' and parent_node is null;
 
--- 3.3  node
+-- 4.3  node
 insert into category_node(root_node, node_identifier, parent_node, name, level_no, sort_no, hierarchy_path, deleted, creation_time, update_time, creation_user, update_user)
 select r.id, 'cat_a', r.id, 'Category A', 1, 10, '/root/cat_a', false, now(), now(), 'system', 'system'
 from category_node r
-where r.node_identifier='root' and r.parent_node is null;
+where r.node_identifier='root' and r.parent_node is null
+    on conflict (root_node, node_identifier) do nothing;
 
 insert into category_node(root_node, node_identifier, parent_node, name, level_no, sort_no, hierarchy_path, deleted, creation_time, update_time, creation_user, update_user)
 select r.id, 'cat_b', r.id, 'Category B', 1, 20, '/root/cat_b', false, now(), now(), 'system', 'system'
 from category_node r
-where r.node_identifier='root' and r.parent_node is null;
+where r.node_identifier='root' and r.parent_node is null
+    on conflict (root_node, node_identifier) do nothing;
 
--- 3.4 node
+-- 4.4 node
 insert into category_node(root_node, node_identifier, parent_node, name, level_no, sort_no, hierarchy_path, deleted, creation_time, update_time, creation_user, update_user)
 select a.root_node, 'cat_a_1', a.id, 'Category A-1', 2, 10, '/root/cat_a/cat_a_1', false, now(), now(), 'system', 'system'
 from category_node a
-where a.node_identifier='cat_a';
+where a.node_identifier='cat_a'
+    on conflict (root_node, node_identifier) do nothing;
+
 
 
 
