@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 
 public class XmlExportWriter {
 
-    public void write(OutputStream os, String client, Iterable<ArticleExportDto> articles) {
+    public void write(OutputStream os, Integer client, Iterable<ArticleExportDto> articles) {
         try {
             XMLOutputFactory factory = XMLOutputFactory.newFactory();
             XMLStreamWriter w = factory.createXMLStreamWriter(os, StandardCharsets.UTF_8.name());
@@ -17,7 +17,7 @@ public class XmlExportWriter {
             w.writeStartDocument(StandardCharsets.UTF_8.name(), "1.0");
 
             w.writeStartElement("export");
-            if (client != null) w.writeAttribute("client", client);
+            if (client != null) w.writeAttribute("client", String.valueOf(client));
             w.writeAttribute("generatedAt", OffsetDateTime.now().toString());
 
             for (ArticleExportDto a : articles) {

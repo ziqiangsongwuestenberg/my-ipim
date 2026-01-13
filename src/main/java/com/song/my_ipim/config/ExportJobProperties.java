@@ -2,13 +2,15 @@ package com.song.my_ipim.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Data
+@Component
 @ConfigurationProperties(prefix = "myipim.export")
 public class ExportJobProperties {
-    private String client;
+    private Integer client;
     private List<String> attributeWhitelist = new ArrayList<>();
     private Statuses statuses = new Statuses();
     private int pageSize = 500;

@@ -10,13 +10,24 @@ public class AuditListener {
     public void prePersist(BaseEntity e) {
         var now = OffsetDateTime.now();
         e.creationTime = now;
-        e.lastUpdate = now;
+        e.updateTime = now;
+
+        if (e.getCreationUser() == null) {
+            e.setCreationUser("system");
+        }
+        if (e.getUpdateUser() == null) {
+            e.setUpdateUser("system");
+        }
 
     }
 
     @PreUpdate
     public void preUpdate(BaseEntity e) {
-        e.lastUpdate = OffsetDateTime.now();
+        e.updateTime = OffsetDateTime.now();
+
+        if (e.getUpdateUser() == null) {
+            e.setUpdateUser("system");
+        }
     }
 }
 

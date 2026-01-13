@@ -25,7 +25,7 @@ public interface ArticleAvRepository extends JpaRepository<ArticleAV, Long> {
             av.valueBool,
             av.valueDate
         )
-        from ArticleAv av
+        from ArticleAV av
         join av.article a
         join av.attribute attr
         where a.id in :articleIds

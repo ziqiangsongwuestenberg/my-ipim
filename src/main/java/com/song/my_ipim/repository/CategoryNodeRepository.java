@@ -11,9 +11,10 @@ public interface CategoryNodeRepository extends JpaRepository<CategoryNode, Long
 
     List<CategoryNode> findByRootNode_IdAndHierarchyPathStartingWith(Long rootNodeId, String pathPrefix);
 
-    List<CategoryNode> findByParentIsNullOrderByIdAsc();
+    List<CategoryNode> findByParentNodeIsNullOrderByIdAsc();
 
-    List<CategoryNode> findByParentIdOrderByIdAsc(Long parentId);
+    List<CategoryNode> findByParentNode_IdOrderByIdAsc(Long parentId);
+
 
     @Query("""
         select c from CategoryNode c

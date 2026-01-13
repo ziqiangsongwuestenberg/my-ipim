@@ -35,7 +35,7 @@ public class CategoryTreeService {
     }
 
     public List<CategoryNodeDto> getChildren(Long parentId) {
-        return repo.findByParentIdOrderByIdAsc(parentId).stream()
+        return repo.findByParentNode_IdOrderByIdAsc(parentId).stream()
                 .map(n -> new CategoryNodeDto(n.getId(), n.getIdentifier(), n.getName(), List.of()))
                 .toList();
     }

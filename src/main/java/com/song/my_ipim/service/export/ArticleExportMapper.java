@@ -2,6 +2,7 @@ package com.song.my_ipim.service.export;
 
 import com.song.my_ipim.dto.export.ArticleAvExportRow;
 import com.song.my_ipim.dto.export.ArticleExportDto;
+import com.song.my_ipim.dto.export.AttributeValueDto;
 
 import java.util.*;
 
@@ -21,9 +22,22 @@ public final class ArticleExportMapper {
             String value = toStringValue(r);
             if (value == null || value.isBlank()) continue;
 
+            AttributeValueDto valueDto = new AttributeValueDto(value, r.getUnit());
+
             // same identifier appears multiple time -> Use "|" to concatenate them.
-            dto.getAttributes().merge(r.getAttributeIdentifier(), value, (oldV, newV) -> oldV + "|" + newV);
-        }
+            dto.getAttributes().merge(
+                    r.getAttributeIdentifier(),
+                    valueDto,
+                    (oldV, newV) -> {
+                        oldV.setValue(oldV.getValue() + "|" + newV.getValue());
+
+                        // unit
+                        if (oldV.getUnit() == null && newV.getUnit() != null) {
+                            oldV.setUnit(newV.getUnit());
+                        }
+                        return oldV;
+                    }
+            );        }
 
         return new ArrayList<>(map.values());
     }

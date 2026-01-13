@@ -18,7 +18,7 @@ public class ArticleExportDto {
 
     private Map<String, AttributeValueDto> attributes = new LinkedHashMap<>();
 
-    public ArticleExportDto(Long articleId, String articleNo, String productNo, LinkedHashMap attributes) {
+    public ArticleExportDto(Long articleId, String articleNo, String productNo, Map<String, AttributeValueDto> attributes) {
         this.articleId = articleId;
         this.articleNo = articleNo;
         this.productNo = productNo;
