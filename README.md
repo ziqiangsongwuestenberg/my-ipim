@@ -1,4 +1,4 @@
-1, my-ipim:
+1, my-pim:
 
 A personal Spring Boot + PostgreSQL (Docker) backend project inspired by Product Information Management (PIM) systems.
 
@@ -23,7 +23,7 @@ It is designed primarily as a technical showcase for Java backend development ra
 
 ```
 src/main/java
- └── com/song/my_ipim
+ └── com/song/my_pim
      ├── common        # Shared utilities
      ├── config        # Configuration
      ├── dto           # Data transfer objects

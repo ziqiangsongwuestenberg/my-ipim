@@ -47,5 +47,5 @@ jobs:
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
-          name: my-ipim-jar
+          name: my-pim-jar
           path: build/libs/*.jar
