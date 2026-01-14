@@ -3,13 +3,19 @@ package com.song.my_pim.service.export;
 import com.song.my_pim.dto.export.ArticleAvExportRow;
 import com.song.my_pim.dto.export.ArticleExportDto;
 import com.song.my_pim.dto.export.AttributeValueDto;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+@Slf4j
 public final class ArticleExportMapper {
     private ArticleExportMapper(){}
 
     public static List<ArticleExportDto> groupByArticle(List<ArticleAvExportRow> rows) {
+        if (log.isDebugEnabled()) {
+            log.debug("groupByArticle method starts: rows = {}", rows == null ? 0 : rows.size());
+        }
+
         // LinkedHashMap can ensure the order of article
         Map<Long, ArticleExportDto> map = new LinkedHashMap<>();
 
@@ -39,7 +45,12 @@ public final class ArticleExportMapper {
                     }
             );        }
 
-        return new ArrayList<>(map.values());
+        List<ArticleExportDto> res = new ArrayList<>(map.values());
+
+        if (log.isDebugEnabled()) {
+            log.debug("groupByArticle method done: articles = {}", res.size());
+        }
+        return res;
     }
 
     private static String toStringValue(ArticleAvExportRow r) {

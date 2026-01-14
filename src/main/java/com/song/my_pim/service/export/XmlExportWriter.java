@@ -1,15 +1,19 @@
 package com.song.my_pim.service.export;
 
 import com.song.my_pim.dto.export.ArticleExportDto;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.xml.stream.*;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 
+@Slf4j
 public class XmlExportWriter {
 
     public void write(OutputStream os, Integer client, Iterable<ArticleExportDto> articles) {
+        long time = System.currentTimeMillis();
+        log.info("Start writing to the XML .");
         try {
             XMLOutputFactory factory = XMLOutputFactory.newFactory();
             XMLStreamWriter w = factory.createXMLStreamWriter(os, StandardCharsets.UTF_8.name());
@@ -46,7 +50,9 @@ public class XmlExportWriter {
             w.writeEndDocument();
             w.flush();
             w.close();
+            log.info("Writing to XML file complete : ms = {}",(System.currentTimeMillis() - time));
         } catch (XMLStreamException ex) {
+            log.error("XML_WRITE failed after {} ms", (System.currentTimeMillis() - time), ex);
             throw new RuntimeException("Failed to write XML export", ex);
         }
     }

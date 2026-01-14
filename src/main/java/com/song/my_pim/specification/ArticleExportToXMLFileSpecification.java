@@ -12,16 +12,23 @@ import java.util.List;
 public class ArticleExportToXMLFileSpecification {
     private ArticleExportToXMLFileSpecification(){}
 
-    public static Specification<Article> build(ExportJobProperties props) {
+    public static Specification<Article> build(ExportJobProperties props, Integer client,
+                                               Boolean includeDeletedOverride) {
+
         return (root, query, cb) -> {
             List<Predicate> ps = new ArrayList<>();
 
-            if (!props.isIncludeDeleted()) {
+            boolean includeDeleted =
+                    includeDeletedOverride != null
+                            ? includeDeletedOverride
+                            : props.isIncludeDeleted();
+
+            if (!includeDeleted) {
                 ps.add(cb.isFalse(root.get("deleted")));
             }
 
-            if (props.getClient() != null) {
-                ps.add(cb.equal(root.get("client"), props.getClient()));
+            if (client != null) {
+                ps.add(cb.equal(root.get("client"), client));
             }
 
             // status1..4 , need to configure it in property file

@@ -18,6 +18,8 @@ It is designed primarily as a technical showcase for Java backend development ra
 * Gradle (build tool),
 * Hibernate / JPA,
 * Lombok
+* CI
+
 
 3, Project Structure
 
@@ -43,22 +45,51 @@ src/main/java
 * Run the Application: "./gradlew bootRun", or directly from IntelliJ via the Spring Boot run configuration.
 * Database Initialization: V1__create_tables.sql (core tables), v2__seed_base_data.sql (sample data)
  
-5,Current Status
+5, Current Status
 * Core domain entities implemented
 * Dockerized PostgreSQL setup
 * Repository & service layers in place
+* CI pipeline
+* Extended export functionality
 
  Work in progress:
-*  Extended export functionality
 * Advanced query optimization
 * Integration tests
-* CI pipeline
+
+6, Export Articles (XML) Endpoint
+
+This project provides an API endpoint to export articles as an XML file.
+
+Endpoint:
+* POST /api/exports/articles.xml
+* Accept: application/xml
+* Content-Type: application/json
+
+Request Body: {
+  "client": 12,
+  "requestedBy": "demo-user"
+}
+
+* client (required): client identifier to export data for
+* requestedBy (optional): user triggering the export (for logging / audit)
+
+* Content-Type: application/xml
+* Content-Disposition: attachment; filename="articles-export.xml"
+* Response body contains the exported XML document
+
+Manual Test:
+You can manually trigger the export using tools like curl, Insomnia, or Postman.
+
+Example using curl:
+curl -X POST http://localhost:8081/api/exports/articles.xml \
+  -H "Accept: application/xml" \
+  -H "Content-Type: application/json" \
+  -d '{"client":12}' \
+  -o articles-export.xml
 
 
 
-
-
-6, Author :
+Author :
 Zq Song,
 Java Developer
 
