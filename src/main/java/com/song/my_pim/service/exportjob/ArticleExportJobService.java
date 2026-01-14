@@ -1,8 +1,8 @@
-package com.song.my_pim.service.export;
+package com.song.my_pim.service.exportjob;
 
 import com.song.my_pim.config.ExportJobProperties;
-import com.song.my_pim.dto.export.ArticleExportDto;
-import com.song.my_pim.dto.export.ArticleExportRequest;
+import com.song.my_pim.dto.exportjob.ArticleExportDto;
+import com.song.my_pim.dto.exportjob.ArticleExportRequest;
 import com.song.my_pim.entity.article.Article;
 import com.song.my_pim.repository.ArticleAvRepository;
 import com.song.my_pim.repository.ArticleRepository;

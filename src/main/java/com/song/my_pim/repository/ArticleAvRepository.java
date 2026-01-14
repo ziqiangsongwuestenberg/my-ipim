@@ -1,6 +1,6 @@
 package com.song.my_pim.repository;
 
-import com.song.my_pim.dto.export.ArticleAvExportRow;
+import com.song.my_pim.dto.exportjob.ArticleAvExportRow;
 import com.song.my_pim.entity.article.ArticleAV;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,7 +12,7 @@ import java.util.List;
 public interface ArticleAvRepository extends JpaRepository<ArticleAV, Long> {
 
     @Query("""
-        select new com.song.my_pim.dto.export.ArticleAvExportRow(
+        select new com.song.my_pim.dto.exportjob.ArticleAvExportRow(
             a.id,
             a.articleNo,
             a.productNo,

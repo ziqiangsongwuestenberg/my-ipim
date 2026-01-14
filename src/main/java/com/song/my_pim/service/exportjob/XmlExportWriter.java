@@ -1,6 +1,6 @@
-package com.song.my_pim.service.export;
+package com.song.my_pim.service.exportjob;
 
-import com.song.my_pim.dto.export.ArticleExportDto;
+import com.song.my_pim.dto.exportjob.ArticleExportDto;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.xml.stream.*;

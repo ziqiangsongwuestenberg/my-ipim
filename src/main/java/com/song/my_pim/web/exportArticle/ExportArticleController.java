@@ -1,7 +1,7 @@
 package com.song.my_pim.web.exportArticle;
 
-import com.song.my_pim.dto.export.ArticleExportRequest;
-import com.song.my_pim.service.export.ArticleExportJobService;
+import com.song.my_pim.dto.exportjob.ArticleExportRequest;
+import com.song.my_pim.service.exportjob.ArticleExportJobService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
