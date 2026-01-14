@@ -36,3 +36,14 @@ application-local.yml
 ### Temporary files ###
 *.tmp
 *.swp
+
+# Gradle
+.gradle/
+build/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Exported / generated data
+export/
