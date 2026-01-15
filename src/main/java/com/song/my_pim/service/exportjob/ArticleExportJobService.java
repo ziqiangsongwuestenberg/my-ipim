@@ -58,6 +58,6 @@ public class ArticleExportJobService {
         } while (page.hasNext());
 
         log.info("Get {} articles that meet the export criteria", all.size());
-        xmlWriter.write(os, props.getClient(), all);
+        xmlWriter.write(os, client, all);
     }
 }
