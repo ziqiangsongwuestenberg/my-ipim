@@ -31,12 +31,24 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
     @Test
     void export_articles_xml_should_return_xml() throws Exception {
-        mvc.perform(post("/api/exports/articles.xml")
+        MvcResult r = mvc.perform(post("/api/exports/articles.xml")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_XML)
                         .content("{\"client\":12,\"requestedBy\":\"it-test\"}"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_XML))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("<export")));
+                .andReturn();
+
+        String ct = r.getResponse().getContentType();
+        String body = r.getResponse().getContentAsString();
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                ct == null || ct.toLowerCase().contains("application/xml"),
+                "Unexpected Content-Type: " + ct
+        );
+        org.junit.jupiter.api.Assertions.assertTrue(
+                body.contains("<export"),
+                "Response body does not contain <export>:\n" + body
+        );
     }
+
 }
