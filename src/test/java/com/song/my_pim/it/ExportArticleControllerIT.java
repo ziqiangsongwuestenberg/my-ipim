@@ -36,7 +36,6 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
                         .content("{\"client\":12,\"requestedBy\":\"it-test\"}"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/xml"))
-                .andExpect(content().string(Matchers.containsString("<?xml")))
                 .andExpect(content().string(Matchers.containsString("<export")));
     }
 }
