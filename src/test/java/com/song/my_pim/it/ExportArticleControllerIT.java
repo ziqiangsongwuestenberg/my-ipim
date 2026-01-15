@@ -31,18 +31,12 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
     @Test
     void export_articles_xml_should_return_xml() throws Exception {
-//        mvc.perform(post("/api/exports/articles.xml")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .accept(MediaType.APPLICATION_XML)
-//                        .content("{\"client\":12,\"requestedBy\":\"it-test\"}"))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentTypeCompatibleWith("application/xml"))
-//                .andExpect(content().string(Matchers.containsString("<export")));
-
         mvc.perform(post("/api/exports/articles.xml")
-                        .contentType("application/json")
-                        .header("Accept", "application/xml")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_XML)
                         .content("{\"client\":12,\"requestedBy\":\"it-test\"}"))
-                .andDo(print());
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_XML))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<export")));
     }
 }
