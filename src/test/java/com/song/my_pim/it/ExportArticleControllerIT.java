@@ -1,6 +1,7 @@
 package com.song.my_pim.it;
 
 import org.flywaydb.core.Flyway;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,22 +30,13 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
     @Test
     void export_articles_xml_should_return_xml() throws Exception {
-        MvcResult r = mvc.perform(post("/api/exports/articles.xml")
+        mvc.perform(post("/api/exports/articles.xml")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_XML)
                         .content("{\"client\":12,\"requestedBy\":\"it-test\"}"))
-                .andReturn();
-
-        int status = r.getResponse().getStatus();
-        String ct = r.getResponse().getContentType();
-        String body = r.getResponse().getContentAsString();
-
-        System.out.println("STATUS=" + status);
-        System.out.println("Content-Type=" + ct);
-        System.out.println("BODY:\n" + body);
-
-        Assertions.assertEquals(200, status);
-        Assertions.assertTrue(ct == null || ct.contains("application/xml"));
-        Assertions.assertTrue(body.contains("<export"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/xml"))
+                .andExpect(content().string(Matchers.containsString("<?xml")))
+                .andExpect(content().string(Matchers.containsString("<export")));
     }
 }
