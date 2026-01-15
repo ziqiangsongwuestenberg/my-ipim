@@ -13,7 +13,12 @@ It is designed primarily as a technical showcase for Java backend development ra
 * Spring Boot, 
 * Spring Web,
 * Spring Data JPA,
-* PostgreSQL 16 (Dockerized),
+* PostgreSQL 16 (
+  - Dockerized for local development
+  - Provisioned via Testcontainers for integration tests
+  ),
+- Flyway (database schema & test data migrations)
+- Testcontainers (integration testing with real PostgreSQL)
 * Docker & Docker Compose,
 * Gradle (build tool),
 * Hibernate / JPA,
@@ -88,6 +93,15 @@ curl -X POST http://localhost:8081/api/exports/articles.xml \
   -o articles-export.xml
 
 
+7, Integration Tests
+
+Integration tests are executed inside a VM environment with Docker enabled.
+PostgreSQL is provisioned dynamically using Testcontainers.
+Database schema and test data are managed via Flyway.
+
+To run tests:
+
+./gradlew test
 
 Author :
 Zq Song,

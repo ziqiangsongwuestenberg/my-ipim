@@ -14,13 +14,13 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: devdb
+          POSTGRES_DB: my_pim_test
           POSTGRES_USER: user
           POSTGRES_PASSWORD: user
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U user -d devdb"
+          --health-cmd="pg_isready -U user -d my_pim_test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -39,10 +39,11 @@ jobs:
 
       - name: Build & Test
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/devdb
+          SPRING_PROFILES_ACTIVE: ci
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/my_pim_test
           SPRING_DATASOURCE_USERNAME: user
           SPRING_DATASOURCE_PASSWORD: user
-        run: ./gradlew clean test build
+        run: ./gradlew clean build
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
