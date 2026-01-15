@@ -36,12 +36,6 @@ public class ArticleExportJobService {
         Pageable pageable = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.ASC, "id"));
 
 
-        // 这里为了“边查边写”，我们用一个小技巧：先写 header，然后每页写一批 article
-        // 但我们 XmlExportWriter 目前是一次性写完整文档。
-        // 最简单：先把所有 ArticleExportDto 收集到 list（数据量小可行）
-        // 数据量大：我们把 XmlExportWriter 改成“分段写”，我下面也告诉你怎么改。
-
-        // 先用“简单版”（适合先跑通）
         List<ArticleExportDto> all = new ArrayList<>();
 
         Page<Article> page;

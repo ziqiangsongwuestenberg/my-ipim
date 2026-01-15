@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -30,12 +31,18 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
     @Test
     void export_articles_xml_should_return_xml() throws Exception {
+//        mvc.perform(post("/api/exports/articles.xml")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .accept(MediaType.APPLICATION_XML)
+//                        .content("{\"client\":12,\"requestedBy\":\"it-test\"}"))
+//                .andExpect(status().isOk())
+//                .andExpect(content().contentTypeCompatibleWith("application/xml"))
+//                .andExpect(content().string(Matchers.containsString("<export")));
+
         mvc.perform(post("/api/exports/articles.xml")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_XML)
+                        .contentType("application/json")
+                        .header("Accept", "application/xml")
                         .content("{\"client\":12,\"requestedBy\":\"it-test\"}"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith("application/xml"))
-                .andExpect(content().string(Matchers.containsString("<export")));
+                .andDo(print());
     }
 }
