@@ -1,6 +1,6 @@
 package com.song.my_pim.service.categoryService;
 
-import com.song.my_pim.dto.category.CategoryNodeDto;
+import com.song.my_pim.dto.categoryNode.CategoryNodeDto;
 import com.song.my_pim.entity.category.CategoryNode;
 import com.song.my_pim.repository.CategoryNodeRepository;
 import lombok.RequiredArgsConstructor;

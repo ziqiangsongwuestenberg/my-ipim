@@ -1,4 +1,4 @@
-package com.song.my_pim.dto.category;
+package com.song.my_pim.dto.categoryNode;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

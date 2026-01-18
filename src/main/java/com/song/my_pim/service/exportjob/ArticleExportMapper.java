@@ -19,20 +19,20 @@ public final class ArticleExportMapper {
         // LinkedHashMap can ensure the order of article
         Map<Long, ArticleExportDto> map = new LinkedHashMap<>();
 
-        for (ArticleAvExportRow r : rows) {
+        for (ArticleAvExportRow articleAvExportRow : rows) {
             ArticleExportDto dto = map.computeIfAbsent(
-                    r.getArticleId(),
-                    id -> new ArticleExportDto(id, r.getArticleNo(), r.getProductNo(), new LinkedHashMap<>())
+                    articleAvExportRow.getArticleId(),
+                    id -> new ArticleExportDto(id, articleAvExportRow.getArticleNo(), articleAvExportRow.getProductNo(), new LinkedHashMap<>())
             );
 
-            String value = toStringValue(r);
+            String value = toStringValue(articleAvExportRow);
             if (value == null || value.isBlank()) continue;
 
-            AttributeValueDto valueDto = new AttributeValueDto(value, r.getUnit());
+            AttributeValueDto valueDto = new AttributeValueDto(value, articleAvExportRow.getUnit());
 
             // same identifier appears multiple time -> Use "|" to concatenate them.
             dto.getAttributes().merge(
-                    r.getAttributeIdentifier(),
+                    articleAvExportRow.getAttributeIdentifier(),
                     valueDto,
                     (oldV, newV) -> {
                         oldV.setValue(oldV.getValue() + "|" + newV.getValue());
@@ -43,7 +43,8 @@ public final class ArticleExportMapper {
                         }
                         return oldV;
                     }
-            );        }
+            );
+        }
 
         List<ArticleExportDto> res = new ArrayList<>(map.values());
 

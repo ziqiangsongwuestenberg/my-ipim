@@ -1,5 +1,6 @@
 package com.song.my_pim.web.exportArticle;
 
+import com.song.my_pim.common.exception.ExportWriteException;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
 import com.song.my_pim.service.exportjob.ArticleExportJobService;
@@ -41,11 +42,18 @@ public class ExportArticleController {
 
         try {
             job.exportToXml(client, request, response.getOutputStream());
+
             response.flushBuffer();
             log.info("Export Article to the XML file request finished in {} ms", System.currentTimeMillis() - time);
-        } catch (Exception ex) {
-            log.error("Export Article to the XML file request failed after {} ms", System.currentTimeMillis() - time, ex);
-            throw ex;
+        } catch (ExportWriteException ex) {
+            log.error("Export XML failed", ex);
+            if (!response.isCommitted()) {
+                response.resetBuffer();
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.setContentType("text/plain; charset=UTF-8");
+                response.getWriter().write("Failed to write XML export.");
+                response.flushBuffer();
+            }
         }
     }
 }

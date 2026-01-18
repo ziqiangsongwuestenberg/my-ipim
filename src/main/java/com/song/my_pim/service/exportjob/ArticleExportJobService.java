@@ -26,11 +26,10 @@ public class ArticleExportJobService {
     private final ExportJobProperties props;
     private final ArticleRepository articleRepo;
     private final ArticleAvRepository avRepo;
-
-    private final XmlExportWriter xmlWriter = new XmlExportWriter();
+    private final XmlExportWriter xmlWriter;
 
     @Transactional(readOnly = true)
-    public void exportToXml(Integer client, ArticleExportRequest request, OutputStream os) {
+    public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
         var spec = ArticleExportToXMLFileSpecification.build(props, client, request.getIncludeDeleted());
 
         int pageSize = Math.max(1, props.getPageSize());
@@ -53,6 +52,6 @@ public class ArticleExportJobService {
         } while (page.hasNext());
 
         log.info("Get {} articles that meet the export criteria", all.size());
-        xmlWriter.write(os, client, all);
+        xmlWriter.write(outputStream, client, all);
     }
 }
