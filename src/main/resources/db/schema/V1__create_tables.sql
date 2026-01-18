@@ -329,3 +329,56 @@ drop trigger if exists trg_user_role_user_right_rel_set_update_time on user_role
 create trigger trg_user_role_user_right_rel_set_update_time
 before update on user_role_user_right_rel
 for each row execute function set_update_time();
+
+--8, price
+create table if not exists price (
+    id               bigserial primary key,
+    client           int not null,
+    identifier       varchar(100) not null,   -- LIST_PRICE, SALE_PRICE
+    name             varchar(255) not null,
+    currency         varchar(3) not null,     -- EUR, USD
+    price_type       varchar(50) not null,    -- LIST, SALE, PURCHASE, B2B
+
+    deleted          boolean not null default false,
+
+    creation_time    timestamptz not null default now(),
+    update_time      timestamptz not null default now(),
+    creation_user    varchar(100) not null,
+    update_user      varchar(100) not null
+    );
+
+create unique index if not exists ux_price_client_identifier
+    on price(client, identifier);
+
+create index if not exists ix_price_client
+    on price(client);
+
+--9, article_price_rel
+create table if not exists article_price_rel (
+    id               bigserial primary key,
+    client           int not null,
+    article_id       bigint not null references article(id) on delete cascade,
+    price_id         bigint not null references price(id) on delete cascade,
+
+    amount           numeric(18,6) not null,
+    valid_from       date,
+    valid_until      date,
+
+    deleted          boolean not null default false,
+
+    creation_time    timestamptz not null default now(),
+    update_time      timestamptz not null default now(),
+    creation_user    varchar(100) not null,
+    update_user      varchar(100) not null
+    );
+
+create unique index if not exists ux_article_price_rel
+    on article_price_rel(client, article_id, price_id, valid_from);
+
+create index if not exists ix_article_price_article
+    on article_price_rel(article_id);
+
+create index if not exists ix_article_price_price
+    on article_price_rel(price_id);
+
+
