@@ -15,6 +15,7 @@ public class ExportJobProperties {
     private Statuses statuses = new Statuses();
     private int pageSize = 500;
     private boolean includeDeleted = false;
+    private String fileName;
 
     @Data
     public static class Statuses {

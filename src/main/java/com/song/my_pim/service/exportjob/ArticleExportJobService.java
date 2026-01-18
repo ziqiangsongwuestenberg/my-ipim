@@ -1,5 +1,6 @@
 package com.song.my_pim.service.exportjob;
 
+import com.song.my_pim.common.constants.ExportConstants;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportDto;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
@@ -33,7 +34,7 @@ public class ArticleExportJobService {
         var spec = ArticleExportToXMLFileSpecification.build(props, client, request.getIncludeDeleted());
 
         int pageSize = Math.max(1, props.getPageSize());
-        Pageable pageable = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.ASC, "id"));
+        Pageable pageable = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.ASC, ExportConstants.ID));
 
 
         List<ArticleExportDto> all = new ArrayList<>();

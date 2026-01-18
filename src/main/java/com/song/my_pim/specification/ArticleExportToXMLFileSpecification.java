@@ -1,5 +1,6 @@
 package com.song.my_pim.specification;
 
+import com.song.my_pim.common.constants.ExportConstants;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.entity.article.Article;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,18 +25,18 @@ public class ArticleExportToXMLFileSpecification {
                             : props.isIncludeDeleted();
 
             if (!includeDeleted) {
-                ps.add(cb.isFalse(root.get("deleted")));
+                ps.add(cb.isFalse(root.get(ExportConstants.DELETED)));
             }
 
             if (client != null) {
-                ps.add(cb.equal(root.get("client"), client));
+                ps.add(cb.equal(root.get(ExportConstants.CLIENT), client));
             }
 
             // status1..4 , need to configure it in property file
-            addStatusFilter(ps, cb, root.get("status1"), props.getStatuses().getStatus1());
-            addStatusFilter(ps, cb, root.get("status2"), props.getStatuses().getStatus2());
-            addStatusFilter(ps, cb, root.get("status3"), props.getStatuses().getStatus3());
-            addStatusFilter(ps, cb, root.get("status4"), props.getStatuses().getStatus4());
+            addStatusFilter(ps, cb, root.get(ExportConstants.STATUS1), props.getStatuses().getStatus1());
+            addStatusFilter(ps, cb, root.get(ExportConstants.STATUS2), props.getStatuses().getStatus2());
+            addStatusFilter(ps, cb, root.get(ExportConstants.STATUS3), props.getStatuses().getStatus3());
+            addStatusFilter(ps, cb, root.get(ExportConstants.STATUS4), props.getStatuses().getStatus4());
 
             return cb.and(ps.toArray(new Predicate[0]));
         };

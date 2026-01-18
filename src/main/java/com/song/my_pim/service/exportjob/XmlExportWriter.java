@@ -1,5 +1,6 @@
 package com.song.my_pim.service.exportjob;
 
+import com.song.my_pim.common.constants.ExportConstants;
 import com.song.my_pim.dto.exportjob.ArticleExportDto;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,23 +21,23 @@ public class XmlExportWriter {
 
             w.writeStartDocument(StandardCharsets.UTF_8.name(), "1.0");
 
-            w.writeStartElement("export");
-            if (client != null) w.writeAttribute("client", String.valueOf(client));
-            w.writeAttribute("generatedAt", OffsetDateTime.now().toString());
+            w.writeStartElement(ExportConstants.EXPORT);
+            if (client != null) w.writeAttribute(ExportConstants.CLIENT, String.valueOf(client));
+            w.writeAttribute(ExportConstants.GENERATED_AT, OffsetDateTime.now().toString());
 
             for (ArticleExportDto a : articles) {
-                w.writeStartElement("article");
-                w.writeAttribute("id", String.valueOf(a.getArticleId()));
-                if (a.getArticleNo() != null) w.writeAttribute("articleNo", a.getArticleNo());
-                if (a.getProductNo() != null) w.writeAttribute("productNo", a.getProductNo());
+                w.writeStartElement(ExportConstants.ARTICLE);
+                w.writeAttribute(ExportConstants.ID, String.valueOf(a.getArticleId()));
+                if (a.getArticleNo() != null) w.writeAttribute(ExportConstants.ARTICLE_NO, a.getArticleNo());
+                if (a.getProductNo() != null) w.writeAttribute(ExportConstants.PRODUCT_NO, a.getProductNo());
 
                 for (var e : a.getAttributes().entrySet()) {
-                    w.writeStartElement("attr");
-                    w.writeAttribute("id", e.getKey());
+                    w.writeStartElement(ExportConstants.ATTR);
+                    w.writeAttribute(ExportConstants.ID, e.getKey());
 
                     var av = e.getValue();
                     if (av.getUnit() != null && !av.getUnit().isBlank()) {
-                        w.writeAttribute("unit", av.getUnit());
+                        w.writeAttribute(ExportConstants.UNIT, av.getUnit());
                     }
 
                     w.writeCharacters(av.getValue() == null ? "" : av.getValue());

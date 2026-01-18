@@ -1,5 +1,6 @@
 package com.song.my_pim.web.exportArticle;
 
+import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
 import com.song.my_pim.service.exportjob.ArticleExportJobService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 @RequestMapping("/api/exports")
 public class ExportArticleController {
-
+    private final ExportJobProperties props;
     private final ArticleExportJobService job;
 
     @PostMapping(value = "/articles.xml",
@@ -24,7 +25,7 @@ public class ExportArticleController {
             produces = "application/xml")
     public void exportArticlesXml(@RequestBody ArticleExportRequest request, HttpServletResponse response) throws IOException {
         long time = System.currentTimeMillis();
-        String fileName = "articles-export.xml";
+        String fileName = props.getFileName();
         String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
 
         Integer client = request.getClient();
