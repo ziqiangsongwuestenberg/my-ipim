@@ -15,6 +15,7 @@ public class ArticlePriceExportRow {
     private String articleNo;
     private String priceIdentifier;
     private BigDecimal amount;
+    private String currency;
     private LocalDate validFrom;
 
     public ArticlePriceExportRow() {
@@ -25,11 +26,13 @@ public class ArticlePriceExportRow {
                                  String articleNo,
                                  String priceIdentifier,
                                  BigDecimal amount,
+                                 String currency,
                                  LocalDate validFrom) {
         this.articleId = articleId;
         this.articleNo = articleNo;
         this.priceIdentifier = priceIdentifier;
         this.amount = amount;
+        this.currency= currency;
         this.validFrom = validFrom;
     }
 }

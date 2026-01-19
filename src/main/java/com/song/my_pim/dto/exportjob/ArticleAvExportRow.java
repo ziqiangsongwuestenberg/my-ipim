@@ -51,4 +51,24 @@ public class ArticleAvExportRow {
         this.valueBool = valueBool;
         this.valueDate = valueDate;
     }
+
+    /**
+     * Export helper:
+     * returns the first non-null value as string
+     */
+    public String getValueAsString() {
+        if (valueText != null) {
+            return valueText;
+        }
+        if (valueNum != null) {
+            return valueNum.toPlainString();
+        }
+        if (valueBool != null) {
+            return valueBool.toString();
+        }
+        if (valueDate != null) {
+            return valueDate.toString(); // ISO-8601
+        }
+        return "";
+    }
 }

@@ -12,5 +12,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     Optional<Article> findByArticleNo(String articleNo);
 
     List<Article> findByProductNo(String productNo);
+
+    List<Article> findByClientAndDeletedFalse(Integer client);
 }
 

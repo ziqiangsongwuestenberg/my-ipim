@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ArticlePriceRelRepository
@@ -23,14 +24,16 @@ public interface ArticlePriceRelRepository
         a.articleNo,
         p.identifier,
         r.amount,
+        p.currency,
         r.validFrom
     )
     from ArticlePriceRel r
       join r.article a
       join r.price p
-    where r.client = :client
+    where a.id in :articleIds
+      and r.client = :client
       and r.deleted = false
       and a.deleted = false
 """)
-    List<ArticlePriceExportRow> findPriceExportRows(@Param("client") Integer client);
+    List<ArticlePriceExportRow> findPriceExportRows(@Param("articleIds") Collection<Long> articleIds, @Param("client") Integer client);
 }

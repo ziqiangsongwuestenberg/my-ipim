@@ -1,4 +1,4 @@
-package com.song.my_pim.service.exportjob;
+package com.song.my_pim.service.exportjob.writer;
 
 import com.song.my_pim.common.constants.ExportConstants;
 import com.song.my_pim.common.exception.ExportWriteException;
