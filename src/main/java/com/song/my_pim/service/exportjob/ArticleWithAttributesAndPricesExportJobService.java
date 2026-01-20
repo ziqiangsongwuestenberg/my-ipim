@@ -34,6 +34,7 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
     private final ArticleRepository articleRepository;
     private final ArticleAvRepository articleAvRepository;
     private final ArticlePriceRelRepository articlePriceRelRepository;
+    private final ArticleExportMapper mapper;
 
     @Transactional(readOnly = true)
     public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
@@ -46,7 +47,7 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
         Map<Long, List<ArticleAvExportRow>> attrsByArticleIdMap = loadArticleAVForExport(client, articeIds);
         Map<Long, List<ArticlePriceExportRow>> priceByArticleIdMap = loadpriceForExport(client, articeIds);
         // 2, mapper ArticleAvExportRow/ArticlePriceExportRow -> List<ArticleExportDto>
-        List<ArticleExportDto> articleExportDTOList = ArticleExportMapper.groupArticlesWithAttributesAndPrices(articles, attrsByArticleIdMap, priceByArticleIdMap);
+        List<ArticleExportDto> articleExportDTOList = mapper.groupArticlesWithAttributesAndPrices(articles, attrsByArticleIdMap, priceByArticleIdMap);
         // 3, write xml
         try {
             xmlExportWithAttributesAndPricesWriter.write(articleExportDTOList, outputStream);

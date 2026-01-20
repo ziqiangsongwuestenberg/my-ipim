@@ -19,5 +19,10 @@ public final class ExportConstants {
     public static final String STATUS2 = "status2";
     public static final String STATUS3 = "status3";
     public static final String STATUS4 = "status4";
+    public static final String PRICES = "prices";
+    public static final String PRICE = "price";
+    public static final String TYPE = "type";
+    public static final String CURRENCY = "currency";
+    public static final String EUR = "EUR";
 
 }

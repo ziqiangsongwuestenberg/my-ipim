@@ -1,17 +1,20 @@
 package com.song.my_pim.service.exportjob.mapper;
 
+import com.song.my_pim.common.util.ExportNumberFormatter;
 import com.song.my_pim.dto.exportjob.*;
 import com.song.my_pim.entity.article.Article;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+@Component
 @Slf4j
 public final class ArticleExportMapper {
     private ArticleExportMapper(){}
 
     // mapper 1
-    public static List<ArticleExportDto> groupArticlesWithAttributes(List<ArticleAvExportRow> rows) {
+    public List<ArticleExportDto> groupArticlesWithAttributes(List<ArticleAvExportRow> rows) {
         if (log.isDebugEnabled()) {
             log.debug("groupByArticle method starts: rows = {}", rows == null ? 0 : rows.size());
         }
@@ -29,25 +32,7 @@ public final class ArticleExportMapper {
                             new LinkedHashMap<>()) // prices
             );
 
-            String value = toStringValue(articleAvExportRow);
-            if (value == null || value.isBlank()) continue;
-
-            AttributeValueDto valueDto = new AttributeValueDto(value, articleAvExportRow.getUnit());
-
-            // same identifier appears multiple time -> Use "|" to concatenate them.
-            dto.getAttributes().merge(
-                    articleAvExportRow.getAttributeIdentifier(),
-                    valueDto,
-                    (oldV, newV) -> {
-                        oldV.setValue(oldV.getValue() + "|" + newV.getValue());
-
-                        // unit
-                        if (oldV.getUnit() == null && newV.getUnit() != null) {
-                            oldV.setUnit(newV.getUnit());
-                        }
-                        return oldV;
-                    }
-            );
+            mergeAttributeValue(articleAvExportRow, dto);
         }
 
         List<ArticleExportDto> res = new ArrayList<>(map.values());
@@ -59,7 +44,7 @@ public final class ArticleExportMapper {
     }
 
     // mapper 2
-    public static List<ArticleExportDto> groupArticlesWithAttributesAndPrices(
+    public List<ArticleExportDto> groupArticlesWithAttributesAndPrices(
             List<Article> articles,
             Map<Long, List<ArticleAvExportRow>> attrsByArticleIdMap,
             Map<Long, List<ArticlePriceExportRow>> priceByArticleIdMap
@@ -74,31 +59,16 @@ public final class ArticleExportMapper {
             dto.setProductNo(a.getProductNo());
 
             //1,add attribute
-            for(ArticleAvExportRow row : attrsByArticleIdMap.get(a.getId())){
-                String value = toStringValue(row);
-                if (value == null || value.isBlank()) continue;
-                AttributeValueDto valueDto = new AttributeValueDto(value, row.getUnit());
-                dto.getAttributes().merge(
-                        row.getAttributeIdentifier(),
-                        valueDto,
-                        (oldV, newV) -> {
-                            oldV.setValue(oldV.getValue() + "|" + newV.getValue());
-
-                            // unit
-                            if (oldV.getUnit() == null && newV.getUnit() != null) {
-                                oldV.setUnit(newV.getUnit());
-                            }
-                            return oldV;
-                        }
-                );
+            for(ArticleAvExportRow articleAvExportRow : attrsByArticleIdMap.get(a.getId())){
+                mergeAttributeValue(articleAvExportRow, dto);
             }
 
             //2,add price
             if (dto.isArticle()) {
-                for(ArticlePriceExportRow row : priceByArticleIdMap.get(a.getId())) {
+                for(ArticlePriceExportRow articleAvExportRow : priceByArticleIdMap.get(a.getId())) {
                     dto.getPrices().put(
-                            row.getPriceIdentifier(),
-                            ArticlePriceExportDto.from(row)
+                            articleAvExportRow.getPriceIdentifier(),
+                            ArticlePriceExportDto.from(articleAvExportRow)
                             );
                 }
             }
@@ -107,15 +77,56 @@ public final class ArticleExportMapper {
         return articleExportDtoList;
     }
 
-    private static String toStringValue(ArticleAvExportRow r) {
+    private void mergeAttributeValue(ArticleAvExportRow row, ArticleExportDto dto) {
 
-        String text = r.getValueText();
-        if (text != null) return text;
+        String identifier = row.getAttributeIdentifier();
+        if (identifier == null || identifier.isBlank()) return;
 
-        if (r.getValueNum() != null) return r.getValueNum().toPlainString();
-        if (r.getValueBool() != null) return r.getValueBool().toString();
-        if (r.getValueDate() != null) return r.getValueDate().toString();
+        AttributeValueDto newV = toAttributeValueDto(row);
+        if (newV == null || newV.getValue() == null || newV.getValue().isBlank()) return;
 
-        return null;
+        dto.getAttributes().merge(identifier, newV, (oldV, incoming) -> {
+
+            if (oldV.getUnit() == null && incoming.getUnit() != null) {
+                oldV.setUnit(incoming.getUnit());
+            }
+
+            if (isTextType(row)) {
+                oldV.setValue(oldV.getValue() + "|" + incoming.getValue());
+                return oldV;
+            }
+
+            // log.warn("Duplicate attribute '{}' for articleId={}, non-text type={}, keep first value",
+            //          identifier, row.getArticleId(), row.getValueType());
+
+            return oldV;
+        });
     }
+
+    private boolean isTextType(ArticleAvExportRow row) {
+        return "TEXT".equalsIgnoreCase(row.getValueType());
+    }
+
+    private AttributeValueDto toAttributeValueDto(ArticleAvExportRow row) {
+
+        String v = switch (row.getValueType().toUpperCase()) {
+            case "STRING"  -> row.getValueText();
+            case "NUMBER"  -> ExportNumberFormatter.decimal2(row.getValueNum());
+            case "BOOLON" -> row.getValueBool() == null ? null : row.getValueBool().toString();
+            case "DATE" -> row.getValueDate() == null ? null : row.getValueDate().toString();
+            default     -> null;
+        };
+
+        if (v == null || v.isBlank()){
+            log.warn(
+                "Skip attribute value: articleId={}, attribute={}, valueType={}, reason=empty_or_unsupported",
+                row.getArticleId(),
+                row.getAttributeIdentifier(),
+                row.getValueType()
+            );
+            return null;
+        }
+        return new AttributeValueDto(v, row.getUnit());
+    }
+
 }

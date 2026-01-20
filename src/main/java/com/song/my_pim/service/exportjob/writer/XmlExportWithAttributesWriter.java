@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class XmlExportWriter {
+public class XmlExportWithAttributesWriter {
     private DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     public void write(OutputStream os, Integer client, Iterable<ArticleExportDto> articles) {

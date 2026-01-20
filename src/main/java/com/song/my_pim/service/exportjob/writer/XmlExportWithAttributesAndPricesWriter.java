@@ -1,6 +1,8 @@
 package com.song.my_pim.service.exportjob.writer;
 
+import com.song.my_pim.common.constants.ExportConstants;
 import com.song.my_pim.common.exception.ExportWriteException;
+import com.song.my_pim.common.util.ExportNumberFormatter;
 import com.song.my_pim.dto.exportjob.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,7 +27,7 @@ public class XmlExportWithAttributesAndPricesWriter {
             XMLStreamWriter writer = factory.createXMLStreamWriter(out, "UTF-8");
 
             writer.writeStartDocument("UTF-8", "1.0");
-            writer.writeStartElement("export");
+            writer.writeStartElement(ExportConstants.EXPORT);
 
             for (ArticleExportDto article : articles) {
                 writeArticle(writer, article);
@@ -46,15 +48,15 @@ public class XmlExportWithAttributesAndPricesWriter {
                               ArticleExportDto article)
             throws XMLStreamException {
 
-        writer.writeStartElement("article");
-        writer.writeAttribute("id", article.getArticleId().toString());
+        writer.writeStartElement(ExportConstants.ARTICLE);
+        writer.writeAttribute(ExportConstants.ID, article.getArticleId().toString());
         writer.writeAttribute("productType", article.getProductType());
 
         if (article.isProduct()) {
-            writer.writeAttribute("productNo", article.getProductNo());
+            writer.writeAttribute(ExportConstants.PRODUCT_NO, article.getProductNo());
         } else {
-            writer.writeAttribute("articleNo", article.getArticleNo());
-            writer.writeAttribute("productNo", article.getProductNo());
+            writer.writeAttribute(ExportConstants.ARTICLE_NO, article.getArticleNo());
+            writer.writeAttribute(ExportConstants.PRODUCT_NO, article.getProductNo());
         }
 
 
@@ -72,11 +74,11 @@ public class XmlExportWithAttributesAndPricesWriter {
             throws XMLStreamException {
 
         for (Map.Entry<String, AttributeValueDto> entry : attrs.entrySet()) {
-            writer.writeStartElement("attr");
-            writer.writeAttribute("id", entry.getKey());
+            writer.writeStartElement(ExportConstants.ATTR);
+            writer.writeAttribute(ExportConstants.ID, entry.getKey());
 
             if (entry.getValue().getUnit() != null) {
-                writer.writeAttribute("unit", entry.getValue().getUnit());
+                writer.writeAttribute(ExportConstants.UNIT, entry.getValue().getUnit());
             }
 
             writer.writeCharacters(entry.getValue().getValue());
@@ -88,13 +90,13 @@ public class XmlExportWithAttributesAndPricesWriter {
                              List<ArticlePriceExportDto> prices)
             throws XMLStreamException {
 
-        writer.writeStartElement("prices");
+        writer.writeStartElement(ExportConstants.PRICES);
 
         for (ArticlePriceExportDto price : prices) {
-            writer.writeStartElement("price");
-            writer.writeAttribute("type", price.getPriceIdentifier());
-            writer.writeAttribute("currency", "EUR");
-            writer.writeCharacters(price.getAmount().toPlainString());
+            writer.writeStartElement(ExportConstants.PRICE);
+            writer.writeAttribute(ExportConstants.TYPE, price.getPriceIdentifier());
+            writer.writeAttribute(ExportConstants.CURRENCY, ExportConstants.EUR);
+            writer.writeCharacters(ExportNumberFormatter.decimal2(price.getAmount()));
             writer.writeEndElement();
         }
 

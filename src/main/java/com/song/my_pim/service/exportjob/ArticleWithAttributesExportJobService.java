@@ -9,7 +9,7 @@ import com.song.my_pim.entity.article.Article;
 import com.song.my_pim.repository.ArticleAvRepository;
 import com.song.my_pim.repository.ArticleRepository;
 import com.song.my_pim.service.exportjob.mapper.ArticleExportMapper;
-import com.song.my_pim.service.exportjob.writer.XmlExportWriter;
+import com.song.my_pim.service.exportjob.writer.XmlExportWithAttributesWriter;
 import com.song.my_pim.specification.ArticleExportToXMLFileSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,8 @@ public class ArticleWithAttributesExportJobService implements XmlExportJob{
     private final ExportJobProperties props;
     private final ArticleRepository articleRepository;
     private final ArticleAvRepository articleAvRepository;
-    private final XmlExportWriter xmlWriter;
+    private final XmlExportWithAttributesWriter xmlWriter;
+    private final ArticleExportMapper mapper;
 
     @Transactional(readOnly = true)
     public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
@@ -53,7 +54,7 @@ public class ArticleWithAttributesExportJobService implements XmlExportJob{
                 //1, get List<ArticleAvExportRow>
                 List<ArticleAvExportRow> rows = articleAvRepository.findExportRows(articleIds, props.getAttributeWhitelist(), client);
                 //2, mapper List<ArticleAvExportRow> -> List<ArticleExportDto>
-                all.addAll(ArticleExportMapper.groupArticlesWithAttributes(rows)); // mapper
+                all.addAll(mapper.groupArticlesWithAttributes(rows)); // mapper
             }
 
             pageable = page.hasNext() ? page.nextPageable() : Pageable.unpaged();
