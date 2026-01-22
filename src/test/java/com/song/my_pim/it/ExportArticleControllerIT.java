@@ -5,6 +5,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +23,9 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
     @Autowired MockMvc mvc;
     @Autowired Flyway flyway;
+
+    @MockBean
+    private com.song.my_pim.service.exportjob.s3Service.ExportToS3Service exportToS3Service;
 
     @BeforeEach
     void resetDb() {
@@ -51,4 +55,29 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
         );
     }
 
+
+    @Test
+    void export_articles_with_price_xml_to_s3_should_return_s3_uri_json() throws Exception {
+
+        // mock: A fixed s3Uri is returned upon successful upload.
+        org.mockito.Mockito.when(exportToS3Service.uploadXmlFile(
+                org.mockito.ArgumentMatchers.any(java.nio.file.Path.class),
+                org.mockito.ArgumentMatchers.anyString()
+        )).thenReturn("s3://my-ipim-exports/exports/articles/client-12/test.xml");
+
+        mvc.perform(post("/api/exports/articlesWithAttributesAndPrice.xml/s3")
+                        .contentType("application/json")
+                        .accept("application/json")
+                        .content("""
+                                {
+                                  "client": 12,
+                                  "requestedBy": "it-test",
+                                  "includeDeleted": false
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.s3Uri")
+                        .value("s3://my-ipim-exports/exports/articles/client-12/test.xml"));
+    }
 }
