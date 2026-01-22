@@ -10,16 +10,22 @@ import com.song.my_pim.repository.ArticleAvRepository;
 import com.song.my_pim.repository.ArticlePriceRelRepository;
 import com.song.my_pim.repository.ArticleRepository;
 import com.song.my_pim.service.exportjob.mapper.ArticleExportMapper;
+import com.song.my_pim.service.exportjob.s3Service.ExportToS3Service;
 import com.song.my_pim.service.exportjob.writer.XmlExportWithAttributesAndPricesWriter;
 import com.song.my_pim.specification.ArticleExportToXMLFileSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.xml.stream.XMLStreamException;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,6 +41,9 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
     private final ArticleAvRepository articleAvRepository;
     private final ArticlePriceRelRepository articlePriceRelRepository;
     private final ArticleExportMapper mapper;
+    private final ExportToS3Service s3ExportService;
+    @Autowired
+    private ApplicationContext applicationContextx;
 
     @Transactional(readOnly = true)
     public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
@@ -53,6 +62,29 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
             xmlExportWithAttributesAndPricesWriter.write(articleExportDTOList, outputStream);
         } catch (XMLStreamException e) {
             throw new RuntimeException(e); //todo : change here
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public String exportArticlesXmlToS3(Integer client, ArticleExportRequest request) {
+        Path tmp = null;
+        try {
+            tmp = Files.createTempFile("articles-export-", ".xml");
+
+            try (OutputStream out = Files.newOutputStream(tmp)) {
+                // Calling @Transactional exportToXml method within the same class bypasses Spring proxy (self-invocation).
+                ArticleWithAttributesAndPricesExportJobService service = applicationContextx.getBean(ArticleWithAttributesAndPricesExportJobService.class);
+                service.exportToXml(client, request, out);
+            }
+
+            String key = "client-" + client + "/articles-" + java.time.LocalDateTime.now() + ".xml";
+            return s3ExportService.uploadXmlFile(tmp, key);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to export/upload xml", e);
+        } finally {
+            if (tmp != null) {
+                try { Files.deleteIfExists(tmp); } catch (Exception ignored) {}
+            }
         }
     }
 

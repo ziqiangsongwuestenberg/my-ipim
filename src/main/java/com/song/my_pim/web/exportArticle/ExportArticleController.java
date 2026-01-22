@@ -3,6 +3,7 @@ package com.song.my_pim.web.exportArticle;
 import com.song.my_pim.common.exception.ExportWriteException;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
+import com.song.my_pim.dto.exportjob.response.ExportToS3Response;
 import com.song.my_pim.service.exportjob.ArticleWithAttributesExportJobService;
 import com.song.my_pim.service.exportjob.ArticleWithAttributesAndPricesExportJobService;
 import com.song.my_pim.service.exportjob.XmlExportJob;
@@ -48,6 +49,30 @@ public class ExportArticleController {
         exportInternal(request, response, articleWithAttributesAndPricesExportJobService);
     }
 
+//    @PostMapping(
+//            value = "/articles.xml/s3",
+//            consumes = "application/json",
+//            produces = "application/json"
+//    )
+//    public ExportToS3Response exportArticlesXmlToS3(@RequestBody ArticleExportRequest request) {
+//        Integer client = requireClient(request);
+//
+//        String s3Uri = articleWithAttributesExportJobService.exportArticlesXmlToS3(client, request);
+//        return new ExportToS3Response(s3Uri);
+//    }
+
+    @PostMapping(
+            value = "/articlesWithAttributesAndPrice.xml/s3",
+            consumes = "application/json",
+            produces = "application/json"
+    )
+    public ExportToS3Response exportArticlesWithPriceXmlToS3(@RequestBody ArticleExportRequest request) {
+        Integer client = requireClient(request);
+
+        String s3Uri = articleWithAttributesAndPricesExportJobService.exportArticlesXmlToS3(client, request);
+        return new ExportToS3Response(s3Uri);
+    }
+
 
     private void exportInternal(
             ArticleExportRequest request,
@@ -55,11 +80,7 @@ public class ExportArticleController {
             XmlExportJob job
     ) throws IOException {
         long time = System.currentTimeMillis();
-        Integer client = request.getClient();
-        if (client == null) {
-            log.error("Client is missing in the request.");
-            throw new IllegalArgumentException("client must be provided");
-        }
+        Integer client = requireClient(request);
         String fileName = props.getFileName();
         String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
 
@@ -83,6 +104,12 @@ public class ExportArticleController {
                 response.flushBuffer();
             }
         }
+    }
+
+    private Integer requireClient(ArticleExportRequest request) {
+        Integer client = request.getClient();
+        if (client == null) throw new IllegalArgumentException("client must be provided");
+        return client;
     }
 
 }

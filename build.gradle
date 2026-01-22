@@ -40,6 +40,10 @@ dependencies {
 
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
+
+    //upload file to s3 bucket
+    implementation platform("software.amazon.awssdk:bom:2.25.0")
+    implementation "software.amazon.awssdk:s3"
 }
 
 tasks.named('test') {
