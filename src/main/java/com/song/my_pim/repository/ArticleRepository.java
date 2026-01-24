@@ -14,5 +14,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     List<Article> findByProductNo(String productNo);
 
     List<Article> findByClientAndDeletedFalse(Integer client);
+    List<Article> findByClientAndIdInAndDeletedFalse(Integer client, List<Long> ids);
 }
 

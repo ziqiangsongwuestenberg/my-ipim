@@ -40,10 +40,10 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
     private final ArticleRepository articleRepository;
     private final ArticleAvRepository articleAvRepository;
     private final ArticlePriceRelRepository articlePriceRelRepository;
-    private final ArticleExportMapper mapper;
+    private final ArticleExportMapper articleExportMapper;
     private final ExportToS3Service s3ExportService;
     @Autowired
-    private ApplicationContext applicationContextx;
+    private ApplicationContext applicationContext;
 
     @Transactional(readOnly = true)
     public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
@@ -56,7 +56,7 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
         Map<Long, List<ArticleAvExportRow>> attrsByArticleIdMap = loadArticleAVForExport(client, articeIds);
         Map<Long, List<ArticlePriceExportRow>> priceByArticleIdMap = loadpriceForExport(client, articeIds);
         // 2, mapper ArticleAvExportRow/ArticlePriceExportRow -> List<ArticleExportDto>
-        List<ArticleExportDto> articleExportDTOList = mapper.groupArticlesWithAttributesAndPrices(articles, attrsByArticleIdMap, priceByArticleIdMap);
+        List<ArticleExportDto> articleExportDTOList = articleExportMapper.groupArticlesWithAttributesAndPrices(articles, attrsByArticleIdMap, priceByArticleIdMap);
         // 3, write xml
         try {
             xmlExportWithAttributesAndPricesWriter.write(articleExportDTOList, outputStream);
@@ -73,7 +73,7 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
 
             try (OutputStream out = Files.newOutputStream(tmp)) {
                 // Calling @Transactional exportToXml method within the same class bypasses Spring proxy (self-invocation).
-                ArticleWithAttributesAndPricesExportJobService service = applicationContextx.getBean(ArticleWithAttributesAndPricesExportJobService.class);
+                ArticleWithAttributesAndPricesExportJobService service = applicationContext.getBean(ArticleWithAttributesAndPricesExportJobService.class);
                 service.exportToXml(client, request, out);
             }
 

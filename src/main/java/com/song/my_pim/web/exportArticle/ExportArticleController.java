@@ -4,6 +4,7 @@ import com.song.my_pim.common.exception.ExportWriteException;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
 import com.song.my_pim.dto.exportjob.response.ExportToS3Response;
+import com.song.my_pim.service.exportjob.ArticleAsyncExportJobService;
 import com.song.my_pim.service.exportjob.ArticleWithAttributesExportJobService;
 import com.song.my_pim.service.exportjob.ArticleWithAttributesAndPricesExportJobService;
 import com.song.my_pim.service.exportjob.XmlExportJob;
@@ -24,48 +25,29 @@ public class ExportArticleController {
     private final ExportJobProperties props;
     private final ArticleWithAttributesExportJobService articleWithAttributesExportJobService;
     private final ArticleWithAttributesAndPricesExportJobService articleWithAttributesAndPricesExportJobService;
+    private final ArticleAsyncExportJobService articleAsyncExportJobService;
+
 
     @PostMapping(
             value = "/articles.xml",
             consumes = "application/json",
-            produces = "application/xml"
-    )
-    public void exportArticlesXml(
-            @RequestBody ArticleExportRequest request,
-            HttpServletResponse response
-    ) throws IOException {
+            produces = "application/xml")
+    public void exportArticlesXml(@RequestBody ArticleExportRequest request, HttpServletResponse response) throws IOException {
         exportInternal(request, response, articleWithAttributesExportJobService);
     }
 
     @PostMapping(
             value = "/articlesWithAttributesAndPrice.xml",
             consumes = "application/json",
-            produces = "application/xml"
-    )
-    public void exportArticlesWithPriceXml(
-            @RequestBody ArticleExportRequest request,
-            HttpServletResponse response
-    ) throws IOException {
+            produces = "application/xml")
+    public void exportArticlesWithPriceXml(@RequestBody ArticleExportRequest request, HttpServletResponse response) throws IOException {
         exportInternal(request, response, articleWithAttributesAndPricesExportJobService);
     }
-
-//    @PostMapping(
-//            value = "/articles.xml/s3",
-//            consumes = "application/json",
-//            produces = "application/json"
-//    )
-//    public ExportToS3Response exportArticlesXmlToS3(@RequestBody ArticleExportRequest request) {
-//        Integer client = requireClient(request);
-//
-//        String s3Uri = articleWithAttributesExportJobService.exportArticlesXmlToS3(client, request);
-//        return new ExportToS3Response(s3Uri);
-//    }
 
     @PostMapping(
             value = "/articlesWithAttributesAndPrice.xml/s3",
             consumes = "application/json",
-            produces = "application/json"
-    )
+            produces = "application/json")
     public ExportToS3Response exportArticlesWithPriceXmlToS3(@RequestBody ArticleExportRequest request) {
         Integer client = requireClient(request);
 
@@ -73,6 +55,24 @@ public class ExportArticleController {
         return new ExportToS3Response(s3Uri);
     }
 
+    @PostMapping(
+            value = "/articlesAsync.xml",
+            consumes = "application/json",
+            produces = "application/xml")
+    public void exportArticleAsyncXml(@RequestBody ArticleExportRequest request, HttpServletResponse response) throws IOException {
+        exportInternal(request, response, articleAsyncExportJobService);
+    }
+
+    @PostMapping(
+            value = "/articlesAsync.xml/s3",
+            consumes = "application/json",
+            produces = "application/json")
+    public ExportToS3Response exportArticleAsyncXmlToS3(@RequestBody ArticleExportRequest request) {
+        Integer client = requireClient(request);
+
+        String s3Uri = articleAsyncExportJobService.exportArticlesXmlToS3(client, request);
+        return new ExportToS3Response(s3Uri);
+    }
 
     private void exportInternal(
             ArticleExportRequest request,
