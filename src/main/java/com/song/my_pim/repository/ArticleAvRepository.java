@@ -33,12 +33,12 @@ public interface ArticleAvRepository extends JpaRepository<ArticleAV, Long> {
           and av.client = :client
           and av.deleted = false
           and attr.deleted = false
-          and attr.identifier in :attrIds
+          and attr.identifier in :attributeIdentifiers
         order by a.id asc, attr.identifier asc, av.valueIndex asc
     """)
     List<ArticleAvExportRow> findExportRows(
             @Param("articleIds") Collection<Long> articleIds,
-            @Param("attrIds") Collection<String> attributeIdentifiers,
+            @Param("attributeIdentifiers") Collection<String> attributeIdentifiers,
             @Param("client") Integer client
     );
 }

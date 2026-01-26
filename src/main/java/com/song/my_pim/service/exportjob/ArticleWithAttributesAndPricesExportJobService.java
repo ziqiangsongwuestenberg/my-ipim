@@ -100,7 +100,7 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
 
     private Map<Long, List<ArticlePriceExportRow>> loadpriceForExport(Integer client, List<Long> articeIds){
         Map<Long, List<ArticlePriceExportRow>> pricesByArticleId =
-                articlePriceRelRepository.findPriceExportRows(articeIds, client)
+                articlePriceRelRepository.findPriceExportRows(articeIds, props.getPriceWhitelist(), client)
                         .stream()
                         .collect(Collectors.groupingBy(
                                 ArticlePriceExportRow::getArticleId

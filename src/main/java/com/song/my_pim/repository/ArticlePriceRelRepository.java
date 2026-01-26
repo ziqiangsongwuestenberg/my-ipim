@@ -31,9 +31,12 @@ public interface ArticlePriceRelRepository
       join r.article a
       join r.price p
     where a.id in :articleIds
+      and p.identifier in :priceIdentifiers
       and r.client = :client
       and r.deleted = false
       and a.deleted = false
 """)
-    List<ArticlePriceExportRow> findPriceExportRows(@Param("articleIds") Collection<Long> articleIds, @Param("client") Integer client);
+    List<ArticlePriceExportRow> findPriceExportRows(@Param("articleIds") Collection<Long> articleIds,
+                                                    @Param("priceIdentifiers") Collection<String> priceIdentifiers,
+                                                    @Param("client") Integer client);
 }

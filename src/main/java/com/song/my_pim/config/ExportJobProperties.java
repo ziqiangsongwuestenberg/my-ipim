@@ -13,6 +13,7 @@ import java.util.*;
 public class ExportJobProperties {
     private Integer client; // default value
     private List<String> attributeWhitelist = new ArrayList<>();
+    private List<String> priceWhitelist = new ArrayList<>();
     private Statuses statuses = new Statuses();
     private int pageSize = 500;
     private boolean includeDeleted = false;

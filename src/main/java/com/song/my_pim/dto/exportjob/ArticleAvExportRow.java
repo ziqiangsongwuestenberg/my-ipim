@@ -67,7 +67,7 @@ public class ArticleAvExportRow {
             return valueBool.toString();
         }
         if (valueDate != null) {
-            return valueDate.toString(); // ISO-8601
+            return valueDate.toString();
         }
         return "";
     }

@@ -17,7 +17,7 @@ public class ArticleExportDto {
     private String articleNo;
     private String productNo;
 
-    private Map<String, AttributeValueDto> attributes = new LinkedHashMap<>();// same identifier appears multiple time -> Use "|" to concatenate them.
+    private Map<String, AttributeValueDto> attributes = new LinkedHashMap<>();// same identifier appears multiple times -> Use "|" to concatenate them.
     private Map<String, ArticlePriceExportDto> prices = new LinkedHashMap<>();
 
     public ArticleExportDto(Long articleId, String articleNo, String productNo, Map<String, AttributeValueDto> attributes, Map<String, ArticlePriceExportDto> prices) {

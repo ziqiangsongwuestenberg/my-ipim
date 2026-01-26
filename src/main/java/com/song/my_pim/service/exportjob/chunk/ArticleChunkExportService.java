@@ -103,7 +103,7 @@ public class ArticleChunkExportService {
     }
 
     private Map<Long, List<ArticlePriceExportRow>> loadpriceForExport(Integer client, List<Long> articeIds){
-        return articlePriceRelRepository.findPriceExportRows(articeIds, client)
+        return articlePriceRelRepository.findPriceExportRows(articeIds, props.getPriceWhitelist(), client)
                         .stream()
                         .collect(Collectors.groupingBy(
                                 ArticlePriceExportRow::getArticleId
