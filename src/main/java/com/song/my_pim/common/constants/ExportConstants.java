@@ -24,5 +24,5 @@ public final class ExportConstants {
     public static final String TYPE = "type";
     public static final String CURRENCY = "currency";
     public static final String EUR = "EUR";
-
+    public static final String ATTR_REQUEST = "request";
 }

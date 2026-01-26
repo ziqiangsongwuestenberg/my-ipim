@@ -16,8 +16,8 @@ public class ArticleExportToXMLFileSpecification {
     public static Specification<Article> build(ExportJobProperties props, Integer client,
                                                Boolean includeDeletedOverride) {
 
-        return (root, query, cb) -> {
-            List<Predicate> ps = new ArrayList<>();
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
             boolean includeDeleted =
                     includeDeletedOverride != null
@@ -25,29 +25,29 @@ public class ArticleExportToXMLFileSpecification {
                             : props.isIncludeDeleted();
 
             if (!includeDeleted) {
-                ps.add(cb.isFalse(root.get(ExportConstants.DELETED)));
+                predicates.add(criteriaBuilder.isFalse(root.get(ExportConstants.DELETED)));
             }
 
             if (client != null) {
-                ps.add(cb.equal(root.get(ExportConstants.CLIENT), client));
+                predicates.add(criteriaBuilder.equal(root.get(ExportConstants.CLIENT), client));
             }
 
             // status1..4 , need to configure it in property file
-            addStatusFilter(ps, cb, root.get(ExportConstants.STATUS1), props.getStatuses().getStatus1());
-            addStatusFilter(ps, cb, root.get(ExportConstants.STATUS2), props.getStatuses().getStatus2());
-            addStatusFilter(ps, cb, root.get(ExportConstants.STATUS3), props.getStatuses().getStatus3());
-            addStatusFilter(ps, cb, root.get(ExportConstants.STATUS4), props.getStatuses().getStatus4());
+            addStatusFilter(predicates, criteriaBuilder, root.get(ExportConstants.STATUS1), props.getStatuses().getStatus1());
+            addStatusFilter(predicates, criteriaBuilder, root.get(ExportConstants.STATUS2), props.getStatuses().getStatus2());
+            addStatusFilter(predicates, criteriaBuilder, root.get(ExportConstants.STATUS3), props.getStatuses().getStatus3());
+            addStatusFilter(predicates, criteriaBuilder, root.get(ExportConstants.STATUS4), props.getStatuses().getStatus4());
 
-            return cb.and(ps.toArray(new Predicate[0]));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 
-    private static void addStatusFilter(List<Predicate> ps,
+    private static void addStatusFilter(List<Predicate> predicates,
                                         jakarta.persistence.criteria.CriteriaBuilder cb,
                                         jakarta.persistence.criteria.Path<Integer> statusPath,
                                         List<Integer> allowed) {
         if (allowed != null && !allowed.isEmpty()) {
-            ps.add(statusPath.in(allowed));
+            predicates.add(statusPath.in(allowed));
         }
     }
 }

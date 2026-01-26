@@ -31,6 +31,7 @@ public interface ArticlePriceRelRepository
       join r.article a
       join r.price p
     where a.id in :articleIds
+      and a.client = :client
       and p.identifier in :priceIdentifiers
       and r.client = :client
       and r.deleted = false

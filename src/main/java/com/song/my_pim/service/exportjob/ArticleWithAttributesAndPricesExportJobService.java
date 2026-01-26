@@ -49,12 +49,11 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
     public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
         //todo : use specification
         Specification specification = ArticleExportToXMLFileSpecification.build(props, client, request.getIncludeDeleted());
-        List<Article> articles = articleRepository.findByClientAndDeletedFalse(client);
-        //todo : here can filter Articles by article statues
+        List<Article> articles = articleRepository.findAll(specification);
         List<Long> articeIds = articles.stream().map(Article::getId).toList();
         // 1, get ArticleAvExportRow and ArticlePriceExportRow
         Map<Long, List<ArticleAvExportRow>> attrsByArticleIdMap = loadArticleAVForExport(client, articeIds);
-        Map<Long, List<ArticlePriceExportRow>> priceByArticleIdMap = loadpriceForExport(client, articeIds);
+        Map<Long, List<ArticlePriceExportRow>> priceByArticleIdMap = loadPriceForExport(client, articeIds);
         // 2, mapper ArticleAvExportRow/ArticlePriceExportRow -> List<ArticleExportDto>
         List<ArticleExportDto> articleExportDTOList = articleExportMapper.groupArticlesWithAttributesAndPrices(articles, attrsByArticleIdMap, priceByArticleIdMap);
         // 3, write xml
@@ -88,23 +87,27 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
         }
     }
 
-    private Map<Long, List<ArticleAvExportRow>> loadArticleAVForExport(Integer client, List<Long> articeIds){
+    private Map<Long, List<ArticleAvExportRow>> loadArticleAVForExport(Integer client, List<Long> articleIds){
+        List<String> whitelist = props.getAttributeWhitelist();
+        if (whitelist == null || whitelist.isEmpty() || articleIds.isEmpty()) {
+            return Map.of();
+        }
+
         Map<Long, List<ArticleAvExportRow>> attrsByArticleId =
-                articleAvRepository.findExportRows(articeIds, props.getAttributeWhitelist(),client)
-                        .stream()
-                        .collect(Collectors.groupingBy(
-                                ArticleAvExportRow::getArticleId
-                        ));
+                articleAvRepository.findExportRows(articleIds, whitelist, client)
+                        .stream().collect(Collectors.groupingBy(ArticleAvExportRow::getArticleId));
         return attrsByArticleId;
     }
 
-    private Map<Long, List<ArticlePriceExportRow>> loadpriceForExport(Integer client, List<Long> articeIds){
+    private Map<Long, List<ArticlePriceExportRow>> loadPriceForExport(Integer client, List<Long> articleIds){
+        List<String> whitelist = props.getPriceWhitelist();
+        if (whitelist == null || whitelist.isEmpty() || articleIds.isEmpty()) {
+            return Map.of();
+        }
+
         Map<Long, List<ArticlePriceExportRow>> pricesByArticleId =
-                articlePriceRelRepository.findPriceExportRows(articeIds, props.getPriceWhitelist(), client)
-                        .stream()
-                        .collect(Collectors.groupingBy(
-                                ArticlePriceExportRow::getArticleId
-                        ));
+                articlePriceRelRepository.findPriceExportRows(articleIds, whitelist, client)
+                        .stream().collect(Collectors.groupingBy(ArticlePriceExportRow::getArticleId));
         return pricesByArticleId;
     }
 

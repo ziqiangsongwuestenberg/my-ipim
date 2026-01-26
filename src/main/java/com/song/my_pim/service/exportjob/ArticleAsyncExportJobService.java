@@ -1,5 +1,6 @@
 package com.song.my_pim.service.exportjob;
 
+import com.song.my_pim.common.constants.ExportConstants;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
 import com.song.my_pim.entity.article.Article;
@@ -104,7 +105,7 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
                 .payloadHandler(payloadHandler)
                 .build();
 
-        exportJobContext.putAttr(ArticleChunkExportService.ATTR_REQUEST, request);
+        exportJobContext.putAttr(ExportConstants.ATTR_REQUEST, request);
         return exportJobContext;
     }
 
