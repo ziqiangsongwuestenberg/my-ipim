@@ -2,12 +2,16 @@ package com.song.my_pim.service.exportjob.payload;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.song.my_pim.common.constants.ExportConstants;
+import com.song.my_pim.common.exception.ExportJobInitException;
 import com.song.my_pim.service.exportjob.process.ExportJobContext;
 import com.song.my_pim.service.exportjob.process.ExportJobResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
@@ -28,8 +32,8 @@ public class FileSystemExportJobPayloadHandler implements ExportJobPayloadHandle
             Files.createDirectories(exportJobContext.getPayloadDir().resolve("export/parts"));
             Files.createDirectories(exportJobContext.getPayloadDir().resolve("transfer"));
             Files.createDirectories(exportJobContext.getPayloadDir().resolve("logs"));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to init payload dir: " + exportJobContext.getPayloadDir(), e);
+        } catch (IOException e) {
+            throw new ExportJobInitException("Failed to init payload dir: " + exportJobContext.getPayloadDir(), e);
         }
     }
 
@@ -59,6 +63,14 @@ public class FileSystemExportJobPayloadHandler implements ExportJobPayloadHandle
         } catch (Exception e) {
             log.warn("Failed to write meta.json", e);
         }
+    }
+
+    //for stack traces
+    @Override
+    public void writeError(ExportJobContext ctx, String name, Throwable ex) {
+        StringWriter sw = new StringWriter();
+        ex.printStackTrace(new PrintWriter(sw));
+        writeError(ctx, name, sw.toString());
     }
 
     @Override

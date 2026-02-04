@@ -1,5 +1,6 @@
 package com.song.my_pim.web.exportArticle;
 
+import com.song.my_pim.common.exception.ExportJobInitException;
 import com.song.my_pim.common.exception.ExportWriteException;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
@@ -90,19 +91,32 @@ public class ExportArticleController {
 
         try {
             job.exportToXml(client, request, response.getOutputStream());
-            response.flushBuffer();
 
+            response.flushBuffer();
             log.info("Export finished in {} ms", System.currentTimeMillis() - time);
+        } catch (ExportJobInitException ex) {
+            log.error("Export init failed. client={}, fileName={}", client, fileName, ex);
+            writePlainErrorIfPossible(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to initialize export job.");
 
         } catch (ExportWriteException ex) {
-            log.error("Export XML failed", ex);
-            if (!response.isCommitted()) {
-                response.resetBuffer();
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                response.setContentType("text/plain; charset=UTF-8");
-                response.getWriter().write("Failed to write XML export.");
-                response.flushBuffer();
-            }
+            log.error("Export XML failed. client={}, fileName={}", client, fileName, ex);
+            writePlainErrorIfPossible(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to write XML export.");
+
+        } catch (Exception ex) {
+            log.error("Export failed unexpectedly. client={}, fileName={}", client, fileName, ex);
+            writePlainErrorIfPossible(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Export failed unexpectedly.");
+        }
+    }
+
+    private void writePlainErrorIfPossible(HttpServletResponse response, int status, String message) throws IOException {
+        if (!response.isCommitted()) {
+            response.resetBuffer();
+            response.setStatus(status);
+            response.setContentType("text/plain; charset=UTF-8");
+            response.getWriter().write(message);
+            response.flushBuffer();
+        } else {
+            log.warn("Response already committed, cannot write error response to client.");
         }
     }
 

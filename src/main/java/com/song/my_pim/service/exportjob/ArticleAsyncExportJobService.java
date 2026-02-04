@@ -1,6 +1,8 @@
 package com.song.my_pim.service.exportjob;
 
 import com.song.my_pim.common.constants.ExportConstants;
+import com.song.my_pim.common.exception.ExportJobInitException;
+import com.song.my_pim.common.exception.ExportWriteException;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
 import com.song.my_pim.entity.article.Article;
@@ -37,39 +39,58 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class ArticleAsyncExportJobService implements XmlExportJob{
-    @Autowired
-    private ApplicationContext applicationContext;
+
+    private final ApplicationContext applicationContext;
     private final ExportJobProperties exportJobProperties;
     private final ExportJobPayloadHandler payloadHandler;
     private final ArticleRepository articleRepository;
     private final ArticleChunkExportService articleChunkExportService;
     private final ExportToS3Service s3ExportService;
+    private final XmlExportStreamWriter xmlExportStreamWriter;
 
 
     @Transactional(readOnly = true)
     public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
 
         ExportJobContext exportJobContext = buildContext(client, request);
-        exportJobContext.getPayloadHandler().init(exportJobContext);
-        exportJobContext.getPayloadHandler().writeMeta(exportJobContext);
+        ChunkRunResult chunkRunResult = null;
 
-        List<Long> articleIds = articleRepository.findByClientAndDeletedFalse(client)
-                .stream().map(Article::getId).toList();
 
-        // Async export
-        ChunkRunResult chunkRunResult = exportChunksAsync(exportJobContext, articleIds);
+        try{
+            exportJobContext.getPayloadHandler().init(exportJobContext);
+            exportJobContext.getPayloadHandler().writeMeta(exportJobContext);
 
-        // merge
-        Path finalFile = mergePartsToFinalXml(exportJobContext, chunkRunResult.partCount);
+            List<Long> articleIds = articleRepository.findByClientAndDeletedFalse(client)
+                    .stream().map(Article::getId).toList();
 
-        // stream to response out
-        try (InputStream inputStream = Files.newInputStream(finalFile)) {
-            inputStream.transferTo(outputStream);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to stream export file", e);
+            // Async export
+            chunkRunResult = exportChunksAsync(exportJobContext, articleIds);
+            if (chunkRunResult.mergedResult.getFailed() > 0) {
+                throw new ExportWriteException("Export failed in one or more chunks. jobId=" + exportJobContext.getJobId());
+            }
+
+            // merge
+            Path finalFile = mergePartsToFinalXml(exportJobContext, chunkRunResult.partCount);
+
+            // stream to response out
+            try (InputStream inputStream = Files.newInputStream(finalFile)) {
+                inputStream.transferTo(outputStream);
+            } catch (IOException e) {
+                throw new ExportWriteException("Failed to stream export file", e);
+            }
+        }catch (ExportJobInitException e) {
+            log.error("Export init failed. jobId={}, client={}, payloadDir={}",
+                    exportJobContext.getJobId(), exportJobContext.getClient(), exportJobContext.getPayloadDir(), e);
+            throw e;
+        } finally {
+            try {
+                if (chunkRunResult != null) {
+                    exportJobContext.getPayloadHandler().writeSummary(exportJobContext, chunkRunResult.mergedResult);
+                }
+            } catch (Exception ex) {
+                log.warn("Failed to write export summary. jobId={}", exportJobContext.getJobId(), ex);
+            }
         }
-
-        exportJobContext.getPayloadHandler().writeSummary(exportJobContext, chunkRunResult.mergedResult);
     }
 
     private record ChunkRunResult(int partCount, ExportJobResult mergedResult) {}
@@ -120,15 +141,14 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
         )) {
 
             // 1, write the head of XML : <export>
-            XmlExportStreamWriter streamWriter = new XmlExportStreamWriter();
-            XMLStreamWriter xmlWriter = streamWriter.start(out);
+            XMLStreamWriter xmlWriter = xmlExportStreamWriter.start(out);
             xmlWriter.flush(); //before OutputStream(copy)
 
             // 2, assemble the part files in threadNo order.
             concatenateArticlePartXml(exportJobContext, partCount, out);
 
             // 3, write the end of XML: </export>
-            streamWriter.finish(xmlWriter);
+            xmlExportStreamWriter.finish(xmlWriter);
 
         } catch (Exception e) {
             exportJobContext.getPayloadHandler().writeError(
@@ -136,7 +156,7 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
                     "merge-error.txt",
                     "Failed to merge parts: " + e.getMessage()
             );
-            throw new RuntimeException("Failed to merge XML part files", e);
+            throw new ExportWriteException("Failed to merge XML part files", e);
         }
 
         // record the final file path in the context
@@ -178,7 +198,7 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
             String key = "client-" + client + "/articles-" + java.time.LocalDateTime.now() + ".xml";
             return s3ExportService.uploadXmlFile(tmp, key);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to export/upload xml", e);
+            throw new ExportWriteException("Failed to export/upload xml", e);
         } finally {
             if (tmp != null) {
                 try { Files.deleteIfExists(tmp); } catch (Exception ignored) {}

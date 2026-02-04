@@ -1,6 +1,7 @@
 package com.song.my_pim.service.exportjob.process;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.song.my_pim.service.exportjob.payload.ExportJobPayloadHandler;
 import lombok.*;
 
@@ -34,8 +35,10 @@ public class ExportJobContext {
 
     // job-specific parameters(e.g. ArticleExportRequest)
     @Builder.Default
+    @JsonIgnore
     private Map<String, Object> attributes = new HashMap<>();
 
+    @JsonIgnore
     private ExportJobPayloadHandler payloadHandler;
 
     public <T> T getAttr(String key, Class<T> type) {

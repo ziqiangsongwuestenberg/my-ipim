@@ -1,12 +1,14 @@
 package com.song.my_pim.service.exportjob.writer.asyncWriter;
 
 import com.song.my_pim.common.constants.ExportConstants;
+import org.springframework.stereotype.Component;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.OutputStream;
 
+@Component
 public class XmlExportStreamWriter {
 
     public XMLStreamWriter start(OutputStream out) throws XMLStreamException {

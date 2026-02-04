@@ -14,5 +14,6 @@ public interface ExportJobPayloadHandler {
 
     void writeMeta(ExportJobContext exportJobContext);
     void writeError(ExportJobContext exportJobContext, String name, String content);
+    void writeError(ExportJobContext exportJobContext, String name, Throwable ex); //for stack traces
     void writeSummary(ExportJobContext exportJobContext, ExportJobResult result);
 }

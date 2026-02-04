@@ -5,6 +5,7 @@ import com.song.my_pim.dto.exportjob.ArticleExportDto;
 import com.song.my_pim.dto.exportjob.ArticlePriceExportDto;
 import com.song.my_pim.dto.exportjob.AttributeValueDto;
 import com.song.my_pim.common.util.ExportNumberFormatter;
+import org.springframework.stereotype.Component;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class XmlArticleWriter {
 
     public void writeArticle(XMLStreamWriter writer, ArticleExportDto article) throws XMLStreamException {
