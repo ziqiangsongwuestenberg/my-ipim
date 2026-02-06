@@ -10,7 +10,7 @@ public class ExportJobExecutorConfig {
     @Bean(name = "exportJobExecutor")
     public TaskExecutor exportJobExecutor() {
         ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
-        ex.setCorePoolSize(4);
+        ex.setCorePoolSize(4); // todo : put these in to properties
         ex.setMaxPoolSize(8);
         ex.setQueueCapacity(200);
         ex.setThreadNamePrefix("exportjob-");

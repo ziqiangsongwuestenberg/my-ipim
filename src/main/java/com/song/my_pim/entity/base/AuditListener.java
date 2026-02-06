@@ -1,5 +1,6 @@
 package com.song.my_pim.entity.base;
 
+import com.song.my_pim.common.constants.ExportConstants;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import java.time.OffsetDateTime;
@@ -13,10 +14,10 @@ public class AuditListener {
         e.updateTime = now;
 
         if (e.getCreationUser() == null) {
-            e.setCreationUser("system");
+            e.setCreationUser(ExportConstants.SYSTEM);
         }
         if (e.getUpdateUser() == null) {
-            e.setUpdateUser("system");
+            e.setUpdateUser(ExportConstants.SYSTEM);
         }
 
     }
@@ -26,7 +27,7 @@ public class AuditListener {
         e.updateTime = OffsetDateTime.now();
 
         if (e.getUpdateUser() == null) {
-            e.setUpdateUser("system");
+            e.setUpdateUser(ExportConstants.SYSTEM);
         }
     }
 }

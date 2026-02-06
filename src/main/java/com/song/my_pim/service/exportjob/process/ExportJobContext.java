@@ -20,7 +20,7 @@ public class ExportJobContext {
     private String jobId;
     private Integer client;
 
-    private int threadCount;
+    private int chunkParts;
 
     // payload
     private String filePrefix;

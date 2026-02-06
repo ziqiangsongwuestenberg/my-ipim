@@ -18,7 +18,7 @@ public class ExportJobProperties {
     private int pageSize = 500;
     private boolean includeDeleted = false;
     private String fileName;
-    private int threadCount = 4;
+    private int chunkParts = 4;
     private Payload payload = new Payload();
 
     @Data

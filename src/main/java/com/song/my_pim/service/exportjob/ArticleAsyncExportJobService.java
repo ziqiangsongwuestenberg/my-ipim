@@ -17,7 +17,6 @@ import com.song.my_pim.service.exportjob.s3Service.ExportToS3Service;
 import com.song.my_pim.service.exportjob.writer.asyncWriter.XmlExportStreamWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,7 +95,7 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
     private record ChunkRunResult(int partCount, ExportJobResult mergedResult) {}
 
     private ChunkRunResult exportChunksAsync(ExportJobContext exportJobContext, List<Long> articleIds){
-        List<List<Long>> partitions = ExportJobUtil.partition(articleIds, exportJobContext.getThreadCount());
+        List<List<Long>> partitions = ExportJobUtil.partition(articleIds, exportJobContext.getChunkParts());
 
         List<CompletableFuture<ExportJobResult>> futures = new ArrayList<>();
         int threadNo = 0;
@@ -119,7 +118,7 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
         ExportJobContext exportJobContext = ExportJobContext.builder()
                 .jobId(jobId)
                 .client(client)
-                .threadCount(exportJobProperties.getThreadCount() > 0 ? exportJobProperties.getThreadCount() : 4)
+                .chunkParts(exportJobProperties.getChunkParts() > 0 ? exportJobProperties.getChunkParts() : 4)
                 .filePrefix("articles-export")
                 .startTime(Instant.now())
                 .payloadDir(payloadDir)
@@ -191,7 +190,7 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
 
             try (OutputStream out = Files.newOutputStream(tmp)) {
                 // Calling @Transactional exportToXml method within the same class bypasses Spring proxy (self-invocation).
-                ArticleWithAttributesAndPricesExportJobService service = applicationContext.getBean(ArticleWithAttributesAndPricesExportJobService.class);
+                ArticleAsyncExportJobService service = applicationContext.getBean(ArticleAsyncExportJobService.class);
                 service.exportToXml(client, request, out);
             }
 
