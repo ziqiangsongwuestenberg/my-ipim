@@ -48,7 +48,6 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
     private final XmlExportStreamWriter xmlExportStreamWriter;
 
 
-    @Transactional(readOnly = true)
     public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
 
         ExportJobContext exportJobContext = buildContext(client, request);
@@ -59,8 +58,7 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
             exportJobContext.getPayloadHandler().init(exportJobContext);
             exportJobContext.getPayloadHandler().writeMeta(exportJobContext);
 
-            List<Long> articleIds = articleRepository.findByClientAndDeletedFalse(client)
-                    .stream().map(Article::getId).toList();
+            List<Long> articleIds = articleRepository.findIdsByClientAndDeletedFalse(client);
 
             // Async export
             chunkRunResult = exportChunksAsync(exportJobContext, articleIds);
@@ -182,7 +180,6 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
         }
     }
 
-    @Transactional(readOnly = true)
     public String exportArticlesXmlToS3(Integer client, ArticleExportRequest request) {
         Path tmp = null;
         try {
