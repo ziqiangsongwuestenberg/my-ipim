@@ -48,7 +48,11 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
-    systemProperty 'api.version', '1.52'
-    systemProperty 'docker.host', 'unix:///var/run/docker.sock'
-    environment 'DOCKER_API_VERSION', '1.52'
+    // Only force Docker settings when explicitly provided (CI often uses older Docker API).
+    if (System.getenv('DOCKER_HOST') != null) {
+        systemProperty 'docker.host', System.getenv('DOCKER_HOST')
+    }
+    if (System.getenv('DOCKER_API_VERSION') != null) {
+        environment 'DOCKER_API_VERSION', System.getenv('DOCKER_API_VERSION')
+    }
 }
