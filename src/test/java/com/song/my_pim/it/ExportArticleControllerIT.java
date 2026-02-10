@@ -1,8 +1,6 @@
 package com.song.my_pim.it;
 
 import org.flywaydb.core.Flyway;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,7 +12,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -26,6 +23,9 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
     @MockBean
     private com.song.my_pim.service.exportjob.s3Service.ExportToS3Service exportToS3Service;
+
+    @MockBean
+    private com.song.my_pim.service.exportjob.ArticleAsyncExportJobService articleAsyncExportJobService;
 
     @BeforeEach
     void resetDb() {
@@ -57,15 +57,14 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
 
     @Test
-    void export_articles_with_price_xml_to_s3_should_return_s3_uri_json() throws Exception {
+    void export_articles_async_xml_to_s3_should_return_s3_uri_json() throws Exception {
 
-        // mock: A fixed s3Uri is returned upon successful upload.
-        org.mockito.Mockito.when(exportToS3Service.uploadXmlFile(
-                org.mockito.ArgumentMatchers.any(java.nio.file.Path.class),
-                org.mockito.ArgumentMatchers.anyString()
-        )).thenReturn("s3://my-ipim-exports/exports/articles/client-12/test.xml");
+        org.mockito.Mockito.when(articleAsyncExportJobService.exportArticlesXmlToS3(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(com.song.my_pim.dto.exportjob.ArticleExportRequest.class)
+        )).thenReturn("s3://my-ipim-exports/exports/articles/client-12/async.xml");
 
-        mvc.perform(post("/api/exports/articlesWithAttributesAndPrice.xml/s3")
+        mvc.perform(post("/api/exports/articlesAsync.xml/s3")
                         .contentType("application/json")
                         .accept("application/json")
                         .content("""
@@ -78,6 +77,6 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/json"))
                 .andExpect(jsonPath("$.s3Uri")
-                        .value("s3://my-ipim-exports/exports/articles/client-12/test.xml"));
+                        .value("s3://my-ipim-exports/exports/articles/client-12/async.xml"));
     }
 }
