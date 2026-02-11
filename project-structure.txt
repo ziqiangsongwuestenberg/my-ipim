@@ -1,0 +1,194 @@
+
+\---src
+    +---main
+    |   +---java
+    |   |   \---com
+    |   |       \---song
+    |   |           \---my_pim
+    |   |               |   HelloWorldController.java
+    |   |               |   MyPimApplication.java
+    |   |               |   
+    |   |               +---common
+    |   |               |   +---api
+    |   |               |   |       ApiResponse.java
+    |   |               |   |       PageResponse.java
+    |   |               |   |       
+    |   |               |   +---constants
+    |   |               |   |       ExportConstants.java
+    |   |               |   |       
+    |   |               |   +---exception
+    |   |               |   |       ExportJobInitException.java
+    |   |               |   |       ExportWriteException.java
+    |   |               |   |       GlobalExceptionHandler.java
+    |   |               |   |       
+    |   |               |   \---util
+    |   |               |           ExportNumberFormatter.java
+    |   |               |           StringUtils.java
+    |   |               |           
+    |   |               +---config
+    |   |               |       ExportJobProperties.java
+    |   |               |       ExportJobThreadPoolConfig.java
+    |   |               |       ExportJobThreadPoolProperties.java
+    |   |               |       JpaConfig.java
+    |   |               |       S3Config.java
+    |   |               |       S3Properties.java
+    |   |               |       SchedulingConfig.java
+    |   |               |       WebConfig.java
+    |   |               |       
+    |   |               +---dto
+    |   |               |   +---article
+    |   |               |   +---categoryNode
+    |   |               |   |       CategoryNodeDto.java
+    |   |               |   |       
+    |   |               |   \---exportjob
+    |   |               |       |   ArticleAvExportRow.java
+    |   |               |       |   ArticleExportDto.java
+    |   |               |       |   ArticleExportRequest.java
+    |   |               |       |   ArticlePriceExportDto.java
+    |   |               |       |   ArticlePriceExportRow.java
+    |   |               |       |   AttributeValueDto.java
+    |   |               |       |   
+    |   |               |       \---response
+    |   |               |               ExportToS3Response.java
+    |   |               |               
+    |   |               +---entity
+    |   |               |   +---article
+    |   |               |   |       Article.java
+    |   |               |   |       ArticleAV.java
+    |   |               |   |       
+    |   |               |   +---attribute
+    |   |               |   |       Attribute.java
+    |   |               |   |       
+    |   |               |   +---base
+    |   |               |   |       AuditListener.java
+    |   |               |   |       BaseEntity.java
+    |   |               |   |       
+    |   |               |   +---category
+    |   |               |   |       CategoryNode.java
+    |   |               |   |       
+    |   |               |   +---job
+    |   |               |   |       JobEntity.java
+    |   |               |   |       JobHistoryEntity.java
+    |   |               |   |       JobStatus.java
+    |   |               |   |       JobType.java
+    |   |               |   |       
+    |   |               |   +---price
+    |   |               |   |       ArticlePriceRel.java
+    |   |               |   |       Price.java
+    |   |               |   |       
+    |   |               |   \---user
+    |   |               |           AppUser.java
+    |   |               |           UserRight.java
+    |   |               |           UserRole.java
+    |   |               |           
+    |   |               +---repository
+    |   |               |   |   ArticleAvRepository.java
+    |   |               |   |   ArticlePriceRelRepository.java
+    |   |               |   |   ArticleRepository.java
+    |   |               |   |   CategoryNodeRepository.java
+    |   |               |   |   PriceRepository.java
+    |   |               |   |   UserRepository.java
+    |   |               |   |   
+    |   |               |   \---job
+    |   |               |           JobHistoryRepository.java
+    |   |               |           JobRepository.java
+    |   |               |           
+    |   |               +---service
+    |   |               |   +---article
+    |   |               |   |       ArticleService.java
+    |   |               |   |       
+    |   |               |   +---attribute
+    |   |               |   |       AttributeService.java
+    |   |               |   |       
+    |   |               |   +---categoryService
+    |   |               |   |       CategoryTreeService.java
+    |   |               |   |       
+    |   |               |   +---exportjob
+    |   |               |   |   |   ArticleAsyncExportJobService.java
+    |   |               |   |   |   ArticleWithAttributesAndPricesExportJobService.java
+    |   |               |   |   |   ArticleWithAttributesExportJobService.java
+    |   |               |   |   |   XmlExportJob.java
+    |   |               |   |   |   
+    |   |               |   |   +---chunk
+    |   |               |   |   |       ArticleChunkExportService.java
+    |   |               |   |   |       ArticleChunkExportTransactionalService.java
+    |   |               |   |   |       
+    |   |               |   |   +---mapper
+    |   |               |   |   |       ArticleExportMapper.java
+    |   |               |   |   |       
+    |   |               |   |   +---payload
+    |   |               |   |   |       ExportJobPayloadHandler.java
+    |   |               |   |   |       FileSystemExportJobPayloadHandler.java
+    |   |               |   |   |       
+    |   |               |   |   +---process
+    |   |               |   |   |       ExportJobContext.java
+    |   |               |   |   |       ExportJobResult.java
+    |   |               |   |   |       ExportJobUtil.java
+    |   |               |   |   |       
+    |   |               |   |   +---s3Service
+    |   |               |   |   |       ExportToS3Service.java
+    |   |               |   |   |       
+    |   |               |   |   \---writer
+    |   |               |   |       |   XmlExportWithAttributesAndPricesWriter.java
+    |   |               |   |       |   XmlExportWithAttributesWriter.java
+    |   |               |   |       |   
+    |   |               |   |       \---asyncWriter
+    |   |               |   |               XmlArticleWriter.java
+    |   |               |   |               XmlExportPartWriter.java
+    |   |               |   |               XmlExportStreamWriter.java
+    |   |               |   |               
+    |   |               |   +---job
+    |   |               |   |   |   JobDispatcher.java
+    |   |               |   |   |   JobHandler.java
+    |   |               |   |   |   JobScheduler.java
+    |   |               |   |   |   
+    |   |               |   |   \---handlers
+    |   |               |   |           ExportArticlesXmlToS3JobHandler.java
+    |   |               |   |           
+    |   |               |   \---userService
+    |   |               |           UserService.java
+    |   |               |           
+    |   |               +---specification
+    |   |               |       ArticleExportToXMLFileSpecification.java
+    |   |               |       
+    |   |               \---web
+    |   |                   |   DemoQueryController.java
+    |   |                   |   
+    |   |                   +---article
+    |   |                   |       ArticleController.java
+    |   |                   |       
+    |   |                   +---category
+    |   |                   |       CategoryController.java
+    |   |                   |       
+    |   |                   +---exportArticle
+    |   |                   |       ExportArticleController.java
+    |   |                   |       
+    |   |                   \---importArticle
+    |   |                           ImportArticleController.java
+    |   |                           
+    |   \---resources
+    |       |   application-example.properties
+    |       |   application.properties
+    |       |   
+    |       +---db
+    |       |   +---data
+    |       |   |       v2__seed_base_data.sql
+    |       |   |       
+    |       |   \---schema
+    |       |           V1__create_tables.sql
+    |       |           V3__job_scheduler_tables.sql
+    |       |           
+    |       +---static
+    |       \---templates
+    \---test
+        +---java
+        |   \---com
+        |       \---song
+        |           \---my_pim
+        |               \---it
+        |                       AbstractPostgresIT.java
+        |                       ExportArticleControllerIT.java
+        |                       
+        \---resources
+                application-test.properties
+                

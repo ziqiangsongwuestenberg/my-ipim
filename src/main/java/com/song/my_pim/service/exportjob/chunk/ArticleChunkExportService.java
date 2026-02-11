@@ -17,8 +17,8 @@ public class ArticleChunkExportService {
 
     private final ArticleChunkExportTransactionalService articleChunkExportTransactionalService;
 
-    @Qualifier("exportJobExecutor")
-    private final TaskExecutor exportJobExecutor;
+    @Qualifier("exportJobThreadPool")
+    private final TaskExecutor exportJobThreadPool;
 
     public CompletableFuture<ExportJobResult> exportChunkAsync(
             ExportJobContext exportJobContext,
@@ -27,7 +27,7 @@ public class ArticleChunkExportService {
     ) {
         return CompletableFuture.supplyAsync(
                 () -> articleChunkExportTransactionalService.exportChunkTransactional(exportJobContext, articleIdsChunk, threadNo),
-                runnable -> exportJobExecutor.execute(runnable)
+                runnable -> exportJobThreadPool.execute(runnable)
         );
     }
 

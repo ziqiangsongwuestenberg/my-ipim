@@ -6,6 +6,10 @@ A personal Spring Boot + PostgreSQL (Docker) backend project inspired by Product
 
 This project is intentionally designed as a technical showcase focusing on backend architecture, domain modeling, database design, export/batch processing, and integration testing — rather than a production-ready application.
 
+Current primary functionality:
+Supports scheduled and REST-triggered export jobs with chunk-based parallel asynchronous processing,
+structured payload handling, XML generation, and S3 upload integration.
+
 ### 1, Project Positioning
 * Senior Java Backend interview portfolio
 * Backend architecture & data modeling showcase
@@ -36,7 +40,7 @@ This project is intentionally designed as a technical showcase focusing on backe
 
 
 ### 3, Project Structure
-
+(full structure is in project-structure.txt)
 ```
 src/main/java
  └── com/song/my_pim
@@ -66,10 +70,14 @@ Core Domains
 * Pricing
   * Price definitions separated from article-price relations
   * Time-based validity
+* Job / Scheduler
+  * Job definitions and job history tracking
+  * Repository support for scheduled execution records
 * Category Tree (prepared)
   * Tree schema designed but business logic not yet implemented
 * User / Role / Right (prepared)
   * Schema prepared for future security integration
+
 
 
 ### 5, Database Design
@@ -112,11 +120,15 @@ Export functionality is the primary focus of this project and demonstrates progr
 
 #### Export Evolution :
 (These are 3 export jobs)
-* 1, Simple paged export
-  * Articles with attributes
-  * No pricing
-  * Page-based processing  
-  
+* 1, Advanced async & chunk-based export 
+  * Streaming XML via XMLStreamWriter
+  * Chunk-based processing
+  * Asynchronous writers
+  * Temporary file merging
+  * Payload abstraction for extensibility
+  * Upload to AWS S3  
+  * scheduled job execution
+
 
 * 2, Structured export with prices
   * Articles with attributes and prices
@@ -125,14 +137,10 @@ Export functionality is the primary focus of this project and demonstrates progr
   * Upload to AWS S3
 
 
-* 3, Advanced async & chunk-based export
-  * Streaming XML via XMLStreamWriter
-  * Chunk-based processing
-  * Asynchronous writers
-  * Temporary file merging
-  * Payload abstraction for extensibility
-  * Upload to AWS S3  
-  
+* 3, Simple paged export
+* Articles with attributes
+* No pricing
+* Page-based processing
   
 #### Key Components :
 
@@ -140,6 +148,8 @@ Export functionality is the primary focus of this project and demonstrates progr
 * ExportJobPayloadHandler – pluggable output targets
 * Chunk & async writers
 * Streaming XML generation (low memory footprint)
+* Job scheduling & execution tracking
+* S3 bucket upload and export storage
 
 This architecture mirrors real-world batch/export systems handling large datasets.
 
