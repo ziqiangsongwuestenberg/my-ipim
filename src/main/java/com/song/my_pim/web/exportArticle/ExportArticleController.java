@@ -12,6 +12,7 @@ import com.song.my_pim.service.exportjob.XmlExportJob;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
         import java.io.IOException;
@@ -61,6 +62,8 @@ public class ExportArticleController {
             consumes = "application/json",
             produces = "application/xml")
     public void exportArticleAsyncXml(@RequestBody ArticleExportRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType(MediaType.APPLICATION_XML_VALUE);
+        response.setCharacterEncoding(java.nio.charset.StandardCharsets.UTF_8.name());
         exportInternal(request, response, articleAsyncExportJobService);
     }
 

@@ -16,6 +16,7 @@ public class XmlExportStreamWriter {
         XMLStreamWriter writer = factory.createXMLStreamWriter(out, "UTF-8");
         writer.writeStartDocument("UTF-8", "1.0");
         writer.writeStartElement(ExportConstants.EXPORT);
+        writer.writeCharacters("\n");
         return writer;
     }
 

@@ -32,6 +32,16 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
     @MockitoSpyBean
     private com.song.my_pim.service.exportjob.ArticleAsyncExportJobService articleAsyncExportJobService;
 
+    @MockitoSpyBean
+    private com.song.my_pim.service.exportjob.payload.ExportJobPayloadHandler payloadHandler;
+
+    @MockitoSpyBean
+    private com.song.my_pim.service.exportjob.chunk.ArticleChunkExportService articleChunkExportService;
+
+    @MockitoSpyBean
+    private com.song.my_pim.service.exportjob.chunk.ArticleChunkExportTransactionalService articleChunkExportTransactionalService;
+
+
     @DynamicPropertySource
     static void exportPayloadProps(DynamicPropertyRegistry registry) {
         String baseDir = Path.of(System.getProperty("java.io.tmpdir"), "my-pim-it-payload").toString();
@@ -115,23 +125,72 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
                         .accept(MediaType.APPLICATION_XML)
                         .content("{\"client\":12,\"requestedBy\":\"it-test\"}"))
                 .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_XML)) // not allow null
                 .andReturn();
 
-        String ct = r.getResponse().getContentType();
         String body = r.getResponse().getContentAsString();
 
-        org.junit.jupiter.api.Assertions.assertTrue(
-                ct == null || ct.toLowerCase().contains("application/xml"),
-                "Unexpected Content-Type: " + ct
+        // 1) XML 必须是“可解析”的（不是只 contains "<export"）
+        javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        org.w3c.dom.Document doc = dbf.newDocumentBuilder()
+                .parse(new org.xml.sax.InputSource(new java.io.StringReader(body)));
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "export",
+                doc.getDocumentElement().getNodeName(),
+                "Root element must be <export>, but was: " + doc.getDocumentElement().getNodeName()
         );
-        org.junit.jupiter.api.Assertions.assertTrue(
-                body.contains("<export"),
-                "Response body does not contain <export>:\n" + body
-        );
+
+        // 2) 证明 controller 调用了 service.exportToXml(...)
         org.mockito.Mockito.verify(articleAsyncExportJobService).exportToXml(
                 org.mockito.ArgumentMatchers.eq(12),
                 org.mockito.ArgumentMatchers.any(com.song.my_pim.dto.exportjob.ArticleExportRequest.class),
                 org.mockito.ArgumentMatchers.any(java.io.OutputStream.class)
         );
+
+        // 3) 证明 “chunk async 导出真的发生了”（至少一个 chunk 被调度）
+        // 如果你的 DB 里 client=12 没有文章，这个断言会失败（这是我们想要的：避免空跑也通过）
+        org.mockito.Mockito.verify(articleChunkExportService, org.mockito.Mockito.timeout(3000).atLeastOnce())
+                .exportChunkAsync(
+                        org.mockito.ArgumentMatchers.any(com.song.my_pim.service.exportjob.process.ExportJobContext.class),
+                        org.mockito.ArgumentMatchers.anyList(),
+                        org.mockito.ArgumentMatchers.anyInt()
+                );
+
+        // 4) 证明 chunk 的 transactional 真正跑过（更硬）
+        org.mockito.Mockito.verify(articleChunkExportTransactionalService, org.mockito.Mockito.timeout(3000).atLeastOnce())
+                .exportChunkTransactional(
+                        org.mockito.ArgumentMatchers.any(com.song.my_pim.service.exportjob.process.ExportJobContext.class),
+                        org.mockito.ArgumentMatchers.anyList(),
+                        org.mockito.ArgumentMatchers.anyInt()
+                );
+
+        // 5) 抓到 ExportJobContext → 检查 payloadDir 下的文件确实被写出来（part + summary）
+        org.mockito.ArgumentCaptor<com.song.my_pim.service.exportjob.process.ExportJobContext> ctxCaptor =
+                org.mockito.ArgumentCaptor.forClass(com.song.my_pim.service.exportjob.process.ExportJobContext.class);
+
+        org.mockito.Mockito.verify(payloadHandler, org.mockito.Mockito.atLeastOnce()).init(ctxCaptor.capture());
+
+        com.song.my_pim.service.exportjob.process.ExportJobContext ctx = ctxCaptor.getValue();
+        java.nio.file.Path payloadDir = ctx.getPayloadDir();
+
+        java.nio.file.Path summary = payloadDir.resolve("logs").resolve("summary.json");
+        org.junit.jupiter.api.Assertions.assertTrue(
+                java.nio.file.Files.exists(summary),
+                "summary.json not found: " + summary
+        );
+
+        // part-001.xml 至少要存在（证明写了 part 文件）
+        java.nio.file.Path part1 = payloadDir.resolve("export/parts").resolve("part-001.xml");
+        org.junit.jupiter.api.Assertions.assertTrue(
+                java.nio.file.Files.exists(part1),
+                "part file not found: " + part1
+        );
+        org.junit.jupiter.api.Assertions.assertTrue(
+                java.nio.file.Files.size(part1) > 0,
+                "part file is empty: " + part1
+        );
     }
+
 }
