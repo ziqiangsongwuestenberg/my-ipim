@@ -44,6 +44,10 @@ dependencies {
     //upload file to s3 bucket
     implementation platform("software.amazon.awssdk:bom:2.25.0")
     implementation "software.amazon.awssdk:s3"
+
+    //prometheus
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

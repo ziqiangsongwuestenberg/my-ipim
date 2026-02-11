@@ -15,6 +15,7 @@
     |   |               |   |       
     |   |               |   +---constants
     |   |               |   |       ExportConstants.java
+    |   |               |   |       MetricsConstants.java
     |   |               |   |       
     |   |               |   +---exception
     |   |               |   |       ExportJobInitException.java
@@ -34,7 +35,7 @@
     |   |               |       S3Properties.java
     |   |               |       SchedulingConfig.java
     |   |               |       WebConfig.java
-    |   |               |       
+    |   |               |
     |   |               +---dto
     |   |               |   +---article
     |   |               |   +---categoryNode
@@ -50,7 +51,10 @@
     |   |               |       |   
     |   |               |       \---response
     |   |               |               ExportToS3Response.java
-    |   |               |               
+    |   |               |
+    |   |               +---monitoring
+    |   |               |       ExportJobMetrics.java
+    |   |               |
     |   |               +---entity
     |   |               |   +---article
     |   |               |   |       Article.java

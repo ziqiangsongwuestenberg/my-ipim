@@ -8,7 +8,9 @@ This project is intentionally designed as a technical showcase focusing on backe
 
 Current primary functionality:
 Supports scheduled and REST-triggered export jobs with chunk-based parallel asynchronous processing,
-structured payload handling, XML generation, and S3 upload integration.
+structured payload handling, XML generation, and S3 upload integration,
+and Micrometer-based metrics for monitoring job duration, success/failure rates, and running jobs.
+
 
 ### 1, Project Positioning
 * Senior Java Backend interview portfolio
@@ -37,6 +39,7 @@ structured payload handling, XML generation, and S3 upload integration.
 * AWS S3 SDK
 * JUnit 5
 * GitHub Actions (CI)
+* Micrometer (metrics & observability,Timers, Counters, Running job gauges)
 
 
 ### 3, Project Structure
@@ -153,6 +156,24 @@ Export functionality is the primary focus of this project and demonstrates progr
 
 This architecture mirrors real-world batch/export systems handling large datasets.
 
+#### Observability & Metrics
+
+Export execution is instrumented using Micrometer metrics:
+
+* Timer (duration per phase: export / upload)
+* Counter (success / failure tracking with exception tagging)
+* Gauge (currently running jobs per client and job type)
+
+Metrics are tagged by:
+* phase (export / upload)
+* job_type
+* client
+* result (success / fail)
+* exception type
+
+This enables production-style monitoring and operational visibility of export workloads.
+
+
 
 ### 7, API Example – Export Articles (XML)
 > Note: (This endpoint triggers an export job. The XML file is generated using a
@@ -200,10 +221,12 @@ This ensures that test behavior closely matches production-like environments.
 ### 10, Current Status
 * Core domain entities
 * Export architecture (streaming, async, chunk-based)
+* Micrometer-based job monitoring (duration, counters, running gauges)
 * PostgreSQL (Docker)
 * Flyway migrations
 * Integration tests with Testcontainers
 * CI pipeline
+
 
  Work in progress:
 *  Category tree business logic

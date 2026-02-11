@@ -5,7 +5,7 @@ import com.song.my_pim.common.exception.ExportJobInitException;
 import com.song.my_pim.common.exception.ExportWriteException;
 import com.song.my_pim.config.ExportJobProperties;
 import com.song.my_pim.dto.exportjob.ArticleExportRequest;
-import com.song.my_pim.entity.article.Article;
+import com.song.my_pim.monitoring.ExportJobMetrics;
 import com.song.my_pim.repository.ArticleRepository;
 import com.song.my_pim.service.exportjob.chunk.ArticleChunkExportService;
 import com.song.my_pim.service.exportjob.payload.ExportJobPayloadHandler;
@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.xml.stream.XMLStreamWriter;
 import java.io.IOException;
@@ -46,48 +45,52 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
     private final ArticleChunkExportService articleChunkExportService;
     private final ExportToS3Service s3ExportService;
     private final XmlExportStreamWriter xmlExportStreamWriter;
+    private final ExportJobMetrics exportJobMetrics;
 
 
     public void exportToXml(Integer client, ArticleExportRequest request, OutputStream outputStream) {
 
-        ExportJobContext exportJobContext = buildContext(client, request);
-        ChunkRunResult chunkRunResult = null;
+        exportJobMetrics.time("export", "articles_xml", String.valueOf(client), () -> {
+            ExportJobContext exportJobContext = buildContext(client, request);
+            ChunkRunResult chunkRunResult = null;
 
 
-        try{
-            exportJobContext.getPayloadHandler().init(exportJobContext);
-            exportJobContext.getPayloadHandler().writeMeta(exportJobContext);
-
-            List<Long> articleIds = articleRepository.findIdsByClientAndDeletedFalse(client);
-
-            // Async export
-            chunkRunResult = exportChunksAsync(exportJobContext, articleIds);
-            if (chunkRunResult.mergedResult.getFailed() > 0) {
-                throw new ExportWriteException("Export failed in one or more chunks. jobId=" + exportJobContext.getJobId());
-            }
-
-            // merge
-            Path finalFile = mergePartsToFinalXml(exportJobContext, chunkRunResult.partCount);
-
-            // stream to response out
-            try (InputStream inputStream = Files.newInputStream(finalFile)) {
-                inputStream.transferTo(outputStream);
-            } catch (IOException e) {
-                throw new ExportWriteException("Failed to stream export file", e);
-            }
-        }catch (ExportJobInitException e) {
-            log.error("Export init failed. jobId={}, client={}, payloadDir={}",
-                    exportJobContext.getJobId(), exportJobContext.getClient(), exportJobContext.getPayloadDir(), e);
-            throw e;
-        } finally {
             try {
-                if (chunkRunResult != null) {
-                    exportJobContext.getPayloadHandler().writeSummary(exportJobContext, chunkRunResult.mergedResult);
+                exportJobContext.getPayloadHandler().init(exportJobContext);
+                exportJobContext.getPayloadHandler().writeMeta(exportJobContext);
+
+                List<Long> articleIds = articleRepository.findIdsByClientAndDeletedFalse(client);
+
+                // Async export
+                chunkRunResult = exportChunksAsync(exportJobContext, articleIds);
+                if (chunkRunResult.mergedResult.getFailed() > 0) {
+                    throw new ExportWriteException("Export failed in one or more chunks. jobId=" + exportJobContext.getJobId());
                 }
-            } catch (Exception ex) {
-                log.warn("Failed to write export summary. jobId={}", exportJobContext.getJobId(), ex);
+
+                // merge
+                Path finalFile = mergePartsToFinalXml(exportJobContext, chunkRunResult.partCount);
+
+                // stream to response out
+                try (InputStream inputStream = Files.newInputStream(finalFile)) {
+                    inputStream.transferTo(outputStream);
+                } catch (IOException e) {
+                    throw new ExportWriteException("Failed to stream export file", e);
+                }
+
+            } catch (ExportJobInitException e) {
+                log.error("Export init failed. jobId={}, client={}, payloadDir={}",
+                        exportJobContext.getJobId(), exportJobContext.getClient(), exportJobContext.getPayloadDir(), e);
+                throw e;
+            } finally {
+                try {
+                    if (chunkRunResult != null) {
+                        exportJobContext.getPayloadHandler().writeSummary(exportJobContext, chunkRunResult.mergedResult);
+                    }
+                } catch (Exception ex) {
+                    log.warn("Failed to write export summary. jobId={}", exportJobContext.getJobId(), ex);
+                }
             }
-        }
+        });
     }
 
     private record ChunkRunResult(int partCount, ExportJobResult mergedResult) {}
@@ -184,15 +187,19 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
         Path tmp = null;
         try {
             tmp = Files.createTempFile("articles-export-", ".xml");
+            final Path tmpFinal = tmp; // tmp in lambda has to be final
 
-            try (OutputStream out = Files.newOutputStream(tmp)) {
+            try (OutputStream out = Files.newOutputStream(tmpFinal)) {
                 // Calling @Transactional exportToXml method within the same class bypasses Spring proxy (self-invocation).
                 ArticleAsyncExportJobService service = applicationContext.getBean(ArticleAsyncExportJobService.class);
                 service.exportToXml(client, request, out);
             }
 
             String key = "client-" + client + "/articles-" + java.time.LocalDateTime.now() + ".xml";
-            return s3ExportService.uploadXmlFile(tmp, key);
+
+            String s3rui = exportJobMetrics.time("upload", "articles_xml", String.valueOf(client), () -> s3ExportService.uploadXmlFile(tmpFinal, key));
+
+            return s3rui;
         } catch (IOException e) {
             throw new ExportWriteException("Failed to export/upload xml", e);
         } finally {
@@ -201,6 +208,5 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
             }
         }
     }
-
 
 }
