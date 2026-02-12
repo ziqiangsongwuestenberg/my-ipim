@@ -27,5 +27,14 @@ public abstract class AbstractPostgresIT {
         r.add("spring.datasource.username", POSTGRES::getUsername);
         r.add("spring.datasource.password", POSTGRES::getPassword);
         r.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+
+        // Flyway create db tables + seed
+        r.add("spring.flyway.enabled", () -> "true");
+        r.add("spring.flyway.locations", () -> "classpath:db/schema,classpath:db/data");
+
+        //  Hibernate doesn't create the table
+        r.add("spring.jpa.hibernate.ddl-auto", () -> "none");
+
+        r.add("spring.flyway.clean-disabled", () -> "true");
     }
 }

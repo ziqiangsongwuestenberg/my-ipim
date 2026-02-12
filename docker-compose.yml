@@ -1,7 +1,7 @@
+name: my-pim
 services:
   postgres:
     image: postgres:16
-    container_name: postgres
     ports:
       - "5432:5432"
     environment:
@@ -10,6 +10,24 @@ services:
       POSTGRES_PASSWORD: user
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d devdb" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      TZ: Europe/Berlin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./payload:/tmp/myipim-payload
 
 volumes:
   pgdata:
