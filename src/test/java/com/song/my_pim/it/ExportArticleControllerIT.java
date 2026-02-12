@@ -3,6 +3,7 @@ package com.song.my_pim.it;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +26,7 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
     @Autowired MockMvc mvc;
     @Autowired Flyway flyway;
+    @Autowired Environment env;
 
     @MockitoBean
     private com.song.my_pim.service.exportjob.s3Service.ExportToS3Service exportToS3Service;
@@ -50,7 +52,10 @@ class ExportArticleControllerIT extends AbstractPostgresIT {
 
     @BeforeEach
     void resetDb() {
-        flyway.clean();
+//        System.out.println("clean-disabled = " +
+//                env.getProperty("spring.flyway.clean-disabled"));
+//
+//        flyway.clean();
         flyway.migrate();
         org.mockito.Mockito.clearInvocations(articleAsyncExportJobService, exportToS3Service);
     }
