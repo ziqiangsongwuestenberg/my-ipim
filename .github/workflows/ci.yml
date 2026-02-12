@@ -38,9 +38,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Ensure Docker is running
+        run: |
+          sudo systemctl start docker || true
+          docker version
+          docker info
+
       - name: Build & Test
         env:
           SPRING_PROFILES_ACTIVE: test
+          DOCKER_HOST: unix:///var/run/docker.sock
+          TESTCONTAINERS_HOST_OVERRIDE: localhost
+          TESTCONTAINERS_RYUK_DISABLED: "true"
         run: ./gradlew clean build
 
       - name: Upload jar
