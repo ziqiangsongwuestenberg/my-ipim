@@ -34,12 +34,27 @@ jobs:
           ls -lah /var/run/docker.sock || true
           docker ps
           docker run --rm hello-world
-          
+
+      # helps confirm whether DOCKER_API_VERSION is set somewhere unexpected
+      - name: Print Docker env
+        run: |
+          echo "DOCKER_HOST=$DOCKER_HOST"
+          echo "DOCKER_API_VERSION=$DOCKER_API_VERSION"
 
       - name: Build & Test
         env:
           SPRING_PROFILES_ACTIVE: test
-        run: ./gradlew clean build
+
+          # Force Testcontainers to use the local Docker Engine via unix socket
+          DOCKER_HOST: unix:///var/run/docker.sock
+
+          # Fix: Docker API mismatch (client too old vs daemon requires >= 1.44)
+          DOCKER_API_VERSION: "1.44"
+
+          # Extra stability for Testcontainers in CI
+          TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: /var/run/docker.sock
+          TESTCONTAINERS_HOST_OVERRIDE: localhost
+        run: ./gradlew --no-daemon clean build
 
       - name: Print Testcontainers error from test report
         if: failure()
