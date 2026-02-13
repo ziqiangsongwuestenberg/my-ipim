@@ -10,22 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-#    services:
-#      postgres:
-#        image: postgres:16
-#        env:
-#          POSTGRES_DB: devdb
-#          POSTGRES_USER: user
-#          POSTGRES_PASSWORD: user
-#        ports:
-#          - 5432:5432
-#        options: >-
-#          --health-cmd="pg_isready -U user -d devdb"
-#          --health-interval=5s
-#          --health-timeout=5s
-#          --health-retries=20
-          
-
     steps:
       - uses: actions/checkout@v4
 
@@ -41,23 +25,35 @@ jobs:
       - name: Fix docker socket permissions (if needed)
         run: |
           sudo chmod 666 /var/run/docker.sock || true
-          sudo usermod -aG docker $USER || true
+#          sudo usermod -aG docker $USER || true
 
       - name: Docker smoke test (required by Testcontainers)
         run: |
           docker version
           docker info
-          ls -lah /var/run/docker.sock
+          ls -lah /var/run/docker.sock || true
           docker ps
           docker run --rm hello-world
+          
 
       - name: Build & Test
         env:
           SPRING_PROFILES_ACTIVE: test
-#          DOCKER_HOST: unix:///var/run/docker.sock
-#          TESTCONTAINERS_HOST_OVERRIDE: localhost
-#          TESTCONTAINERS_RYUK_DISABLED: "true"
         run: ./gradlew clean build
+
+      - name: Print Testcontainers error from test report
+        if: failure()
+        run: |
+          grep -Rni "DockerClientProviderStrategy|Could not find a valid Docker environment|Ryuk|docker.sock|IllegalStateException" build/reports/tests/test || true
+          f="build/reports/tests/test/classes/com.song.my_pim.it.ExportArticleControllerIT.html"
+          test -f "$f" && sed -n '1,160p' "$f" || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/test
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
