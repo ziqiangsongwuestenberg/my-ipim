@@ -10,20 +10,20 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: devdb
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: user
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U user -d devdb"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=20
+#    services:
+#      postgres:
+#        image: postgres:16
+#        env:
+#          POSTGRES_DB: devdb
+#          POSTGRES_USER: user
+#          POSTGRES_PASSWORD: user
+#        ports:
+#          - 5432:5432
+#        options: >-
+#          --health-cmd="pg_isready -U user -d devdb"
+#          --health-interval=5s
+#          --health-timeout=5s
+#          --health-retries=20
           
 
     steps:
@@ -44,12 +44,22 @@ jobs:
           docker version
           docker info
 
+      - name: Diagnose Docker for Testcontainers
+        run: |
+          whoami
+          uname -a
+          ls -lah /var/run || true
+          ls -lah /var/run/docker.sock || true
+          docker version || true
+          docker info || true
+          docker ps || true
+
       - name: Build & Test
         env:
           SPRING_PROFILES_ACTIVE: test
-          DOCKER_HOST: unix:///var/run/docker.sock
-          TESTCONTAINERS_HOST_OVERRIDE: localhost
-          TESTCONTAINERS_RYUK_DISABLED: "true"
+#          DOCKER_HOST: unix:///var/run/docker.sock
+#          TESTCONTAINERS_HOST_OVERRIDE: localhost
+#          TESTCONTAINERS_RYUK_DISABLED: "true"
         run: ./gradlew clean build
 
       - name: Upload jar
