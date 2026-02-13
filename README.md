@@ -12,7 +12,7 @@ structured payload handling, XML generation, and S3 upload integration,
 and Micrometer-based metrics for monitoring job duration, success/failure rates, and running jobs.
 
 
-### 1, Project Positioning
+### 1. Project Positioning
 * Senior Java Backend interview portfolio
 * Backend architecture & data modeling showcase
 * Inspired by enterprise-grade PIM  systems
@@ -20,7 +20,7 @@ and Micrometer-based metrics for monitoring job duration, success/failure rates,
 * Not a full-featured PIM product
 
 
-### 2, Tech Stack:
+### 2. Tech Stack:
 * Java 21,
 * Spring Boot 3, 
 * Spring Web,
@@ -40,9 +40,10 @@ and Micrometer-based metrics for monitoring job duration, success/failure rates,
 * JUnit 5
 * GitHub Actions (CI)
 * Micrometer (metrics & observability,Timers, Counters, Running job gauges)
+* OpenTelemetry (Java Agent) + OTEL Collector + Jaeger (distributed tracing via OTLP)
 
 
-### 3, Project Structure
+### 3. Project Structure
 (full structure is in project-structure.txt)
 ```
 src/main/java
@@ -60,7 +61,7 @@ src/main/java
 The structure follows a layered architecture, with additional sub-packages introduced where complexity justifies it (e.g. export jobs).
 
 
-### 4, Domain Model Overview
+### 4. Domain Model Overview
 
 Core Domains
 * Article / Product
@@ -83,7 +84,7 @@ Core Domains
 
 
 
-### 5, Database Design
+### 5. Database Design
 
 The database schema reflects patterns commonly used in enterprise PIM systems, with a strong focus on auditability, consistency, and export-oriented read performance.
 
@@ -117,13 +118,13 @@ Clean separation between price definitions and article-price relations, supporti
 * Integration tests use Testcontainers with a real PostgreSQL instance
 
 
-### 6, **Export Architecture (Core Focus)**
+### 6. **Export Architecture (Core Focus)**
 
 Export functionality is the primary focus of this project and demonstrates progressive backend design.
 
 #### Export Evolution :
 (These are 3 export jobs)
-* 1, Advanced async & chunk-based export 
+* 1. Advanced async & chunk-based export 
   * Streaming XML via XMLStreamWriter
   * Chunk-based processing
   * Asynchronous writers
@@ -133,14 +134,14 @@ Export functionality is the primary focus of this project and demonstrates progr
   * scheduled job execution
 
 
-* 2, Structured export with prices
+* 2. Structured export with prices
   * Articles with attributes and prices
   * Improved XML structure
   * Clear separation of concerns
   * Upload to AWS S3
 
 
-* 3, Simple paged export
+* 3. Simple paged export
 * Articles with attributes
 * No pricing
 * Page-based processing
@@ -173,9 +174,31 @@ Metrics are tagged by:
 
 This enables production-style monitoring and operational visibility of export workloads.
 
+#### Tracing (OpenTelemetry + Jaeger)
 
+This project supports distributed tracing for local debugging using OpenTelemetry and Jaeger.
 
-### 7, API Example – Export Articles (XML)
+**Components**
+- **my-pim-app** runs with the OpenTelemetry **Java Agent** (`-javaagent:/otel/opentelemetry-javaagent.jar`)
+- **OpenTelemetry Collector** receives traces via **OTLP** (gRPC/HTTP) on **4317/4318**
+- **Jaeger (all-in-one)** stores and visualizes traces (UI on **16686**)
+
+**Trace pipeline**
+`my-pim-app (OTel Agent) → OTLP (4317/4318) → otel-collector → Jaeger`
+
+**Jaeger UI**
+- http://localhost:16686
+
+**Ports (Docker Compose)**
+- OTEL Collector: `4317` (OTLP/gRPC), `4318` (OTLP/HTTP)
+- Jaeger UI: `16686`
+- Jaeger gRPC ingestion (from collector): `14250`
+
+> Note: This setup is intended for local development only (no auth / no persistence by default).
+
+In production, tracing should be configured via environment variables and proper security controls.
+
+### 7. API Example – Export Articles (XML)
 > Note: (This endpoint triggers an export job. The XML file is generated using a
 streaming, chunk-based writer and uploaded to S3. The response returns
 the final S3 location of the exported file.)
@@ -196,7 +219,7 @@ the final S3 location of the exported file.)
   * s3Uri – Location of the generated XML export in the S3 bucket
 
 
-### 8, Testing & CI
+### 8. Testing & CI
 
 * Integration tests run against a real PostgreSQL instance using Testcontainers
 * Database schema and test data are applied via Flyway
@@ -208,7 +231,7 @@ the final S3 location of the exported file.)
 This ensures that test behavior closely matches production-like environments.
 
 
-### 9, How to Run Locally
+### 9. How to Run Locally
 * Prerequisites: 
   * Java 21+
   * Docker, Docker Compose
@@ -217,8 +240,9 @@ This ensures that test behavior closely matches production-like environments.
   src/main/resources/application.properties"
 * Run the Application: "./gradlew bootRun", or directly from IntelliJ via the Spring Boot run configuration.
 * Database Initialization: V1__create_tables.sql (core tables), v2__seed_base_data.sql (sample data)
+* - “Optional: Start tracing stack (Jaeger + otel-collector)”
  
-### 10, Current Status
+### 10. Current Status
 * Core domain entities
 * Export architecture (streaming, async, chunk-based)
 * Micrometer-based job monitoring (duration, counters, running gauges)
@@ -235,9 +259,9 @@ This ensures that test behavior closely matches production-like environments.
 * Advanced query optimization
 
 
-### 11, Author :
+### 11. Author :
 
-Zq Song,
+Ziqiang Song,
 Java Developer
 
 

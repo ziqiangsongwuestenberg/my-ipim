@@ -17,6 +17,10 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    otelAgent
+}
+
 dependencies {
     // Web & JPA
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -49,6 +53,9 @@ dependencies {
     //prometheus
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+    // OpenTelemetry Java Agent (download via Gradle, but activated via -javaagent)
+    otelAgent "io.opentelemetry.javaagent:opentelemetry-javaagent:2.24.0"
 }
 
 tasks.named('test') {
@@ -60,4 +67,29 @@ tasks.named('test') {
 //    if (System.getenv('DOCKER_API_VERSION') != null) {
 //        environment 'DOCKER_API_VERSION', System.getenv('DOCKER_API_VERSION')
 //    }
+}
+
+tasks.register("copyOtelAgent", Copy) {
+    from(configurations.otelAgent)
+    into(layout.buildDirectory.dir("otel"))
+    rename { "opentelemetry-javaagent.jar" }
+}
+
+tasks.named("bootRun") {
+    dependsOn("copyOtelAgent")
+
+    doFirst {
+        def agentJar = layout.buildDirectory.file("otel/opentelemetry-javaagent.jar").get().asFile
+        jvmArgs "-javaagent:${agentJar.absolutePath}",
+                "-Dotel.instrumentation.executors.enabled=true"
+    }
+
+    environment "OTEL_SERVICE_NAME", "my-ipim"
+    environment "OTEL_TRACES_EXPORTER", "otlp"
+    environment "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"
+    environment "OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"
+
+     // Reduce sampling during development to avoid too many traces.
+     environment "OTEL_TRACES_SAMPLER", "parentbased_traceidratio"
+     environment "OTEL_TRACES_SAMPLER_ARG", "0.2"
 }

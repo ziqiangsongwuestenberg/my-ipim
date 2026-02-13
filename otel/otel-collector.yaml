@@ -1,0 +1,29 @@
+# OpenTelemetry Collector config for local tracing.
+# Purpose:
+#   - Receive OTLP traces from my-pim
+#   - Export traces to Jaeger for visualization
+# Local-only:
+#   - Keep it simple for dev usage; production setups should add auth, batching, limits, and persistence.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch:
+
+exporters:
+  # Exports traces to Jaeger
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
