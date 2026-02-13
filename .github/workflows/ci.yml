@@ -38,21 +38,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Ensure Docker is running
+      - name: Fix docker socket permissions (if needed)
         run: |
-          sudo systemctl start docker || true
+          sudo chmod 666 /var/run/docker.sock || true
+          sudo usermod -aG docker $USER || true
+
+      - name: Docker smoke test (required by Testcontainers)
+        run: |
           docker version
           docker info
-
-      - name: Diagnose Docker for Testcontainers
-        run: |
-          whoami
-          uname -a
-          ls -lah /var/run || true
-          ls -lah /var/run/docker.sock || true
-          docker version || true
-          docker info || true
-          docker ps || true
+          ls -lah /var/run/docker.sock
+          docker ps
+          docker run --rm hello-world
 
       - name: Build & Test
         env:
