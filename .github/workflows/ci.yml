@@ -22,6 +22,14 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # Workaround for Docker Engine v29+ (minimum API version 1.44)
+      # docker-java (used by Testcontainers) may default to API 1.32 and fail with Status 400.
+      - name: Force docker-java API version (workaround for Docker Engine v29+)
+        run: |
+          echo "api.version=1.44" > ~/.docker-java.properties
+          echo "Wrote ~/.docker-java.properties:"
+          cat ~/.docker-java.properties
+
       - name: Fix docker socket permissions (if needed)
         run: |
           sudo chmod 666 /var/run/docker.sock || true
