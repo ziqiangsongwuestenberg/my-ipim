@@ -1,0 +1,19 @@
+<configuration>
+
+    <!-- Reusable MDC fragments that output only when a value is available. -->
+    <property name="MDC_FIELDS"
+              value="%replace(%X{trace_id}){'^(.+)$',' traceId=$1'}%replace(%X{span_id}){'^(.+)$',' spanId=$1'}%replace(%X{requestId}){'^(.+)$',' requestId=$1'}%replace(%X{clientId}){'^(.+)$',' clientId=$1'}%replace(%X{jobType}){'^(.+)$',' jobType=$1'}%replace(%X{s3Key}){'^(.+)$',' s3Key=$1'}%replace(%X{s3Bucket}){'^(.+)$',' s3Bucket=$1'}"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{50} - %msg%property{MDC_FIELDS}%n%ex{30}
+            </pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+</configuration>

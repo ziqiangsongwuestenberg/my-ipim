@@ -28,6 +28,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -184,6 +186,7 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
     }
 
     public String exportArticlesXmlToS3(Integer client, ArticleExportRequest request) {
+
         Path tmp = null;
         try {
             tmp = Files.createTempFile("articles-export-", ".xml");
@@ -195,7 +198,9 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
                 service.exportToXml(client, request, out);
             }
 
-            String key = "client-" + client + "/articles-" + java.time.LocalDateTime.now() + ".xml";
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
+            String ts = LocalDateTime.now().format(fmt);
+            String key = "client-" + client + "/articles-" + ts + ".xml";
 
             String s3rui = exportJobMetrics.time("upload", "articles_xml", String.valueOf(client), () -> s3ExportService.uploadXmlFile(tmpFinal, key));
 

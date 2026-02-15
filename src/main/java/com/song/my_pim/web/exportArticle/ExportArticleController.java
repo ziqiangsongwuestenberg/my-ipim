@@ -12,12 +12,14 @@ import com.song.my_pim.service.exportjob.XmlExportJob;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
         import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -74,8 +76,17 @@ public class ExportArticleController {
     public ExportToS3Response exportArticleAsyncXmlToS3(@RequestBody ArticleExportRequest request) {
         Integer client = requireClient(request);
 
-        String s3Uri = articleAsyncExportJobService.exportArticlesXmlToS3(client, request);
-        return new ExportToS3Response(s3Uri);
+        MDC.put("clientId", String.valueOf(client));
+        MDC.put("jobType", "articles_xml_to_s3");
+        MDC.put("requestId", UUID.randomUUID().toString());
+
+        try{
+            String s3Uri = articleAsyncExportJobService.exportArticlesXmlToS3(client, request);
+            return new ExportToS3Response(s3Uri);
+        } finally {
+            MDC.clear();
+        }
+
     }
 
     private void exportInternal(
@@ -87,6 +98,10 @@ public class ExportArticleController {
         Integer client = requireClient(request);
         String fileName = props.getFileName();
         String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
+
+        MDC.put("clientId", String.valueOf(client));
+        MDC.put("jobType", "articles_xml");
+        MDC.put("requestId", UUID.randomUUID().toString());
 
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setHeader("Content-Disposition",
@@ -108,6 +123,8 @@ public class ExportArticleController {
         } catch (Exception ex) {
             log.error("Export failed unexpectedly. client={}, fileName={}", client, fileName, ex);
             writePlainErrorIfPossible(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Export failed unexpectedly.");
+        } finally {
+            MDC.clear();
         }
     }
 

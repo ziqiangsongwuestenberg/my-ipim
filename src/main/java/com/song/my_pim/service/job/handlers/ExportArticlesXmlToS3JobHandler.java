@@ -6,10 +6,13 @@ import com.song.my_pim.entity.job.JobEntity;
 import com.song.my_pim.entity.job.JobType;
 import com.song.my_pim.service.exportjob.ArticleAsyncExportJobService;
 import com.song.my_pim.service.job.JobHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 public class ExportArticlesXmlToS3JobHandler implements JobHandler {
 
@@ -29,15 +32,32 @@ public class ExportArticlesXmlToS3JobHandler implements JobHandler {
 
     @Override
     public String execute(JobEntity job) throws Exception {
-        // params_json -> ArticleExportRequest
-        ArticleExportRequest request = objectMapper.readValue(job.getParamsJson(), ArticleExportRequest.class);
+        MDC.put("jobType", supports().name());
+        MDC.put("clientId", String.valueOf(job.getClientId()));
+        MDC.put("jobId", String.valueOf(job.getId()));
 
-        Integer client = job.getClientId();
-        String s3Uri = articleAsyncExportJobService.exportArticlesXmlToS3(client, request);
+        try {
+            log.info("job.started");
 
-        // store result_json (as JSON string)
-        return objectMapper.writeValueAsString(Map.of(
-                "s3Uri", s3Uri
-        ));
+            // params_json -> ArticleExportRequest
+            ArticleExportRequest request = objectMapper.readValue(job.getParamsJson(), ArticleExportRequest.class);
+
+            Integer client = job.getClientId();
+            String s3Uri = articleAsyncExportJobService.exportArticlesXmlToS3(client, request);
+
+            log.info("job.completed");
+
+            // store result_json (as JSON string)
+            return objectMapper.writeValueAsString(Map.of(
+                    "s3Uri", s3Uri
+            ));
+        } catch (Exception ex) {
+            log.error("job.failed", ex);
+            throw ex;
+        } finally {
+            // Always clear MDC to prevent leaking context to the next job executed by the same thread.
+            MDC.clear();
+        }
+
     }
 }

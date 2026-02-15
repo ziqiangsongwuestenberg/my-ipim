@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -76,7 +78,9 @@ public class ArticleWithAttributesAndPricesExportJobService implements XmlExport
                 service.exportToXml(client, request, out);
             }
 
-            String key = "client-" + client + "/articles-" + java.time.LocalDateTime.now() + ".xml";
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
+            String ts = LocalDateTime.now().format(fmt);
+            String key = "client-" + client + "/articles-" + ts + ".xml";
             return s3ExportService.uploadXmlFile(tmp, key);
         } catch (IOException e) {
             throw new RuntimeException("Failed to export/upload xml", e);

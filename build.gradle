@@ -7,6 +7,9 @@ plugins {
 group = 'com.song'
 version = '0.0.1-SNAPSHOT'
 
+// OpenTelemetry agent version (single source of truth)
+def otelAgentVersion = "2.24.0"
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
@@ -55,7 +58,16 @@ dependencies {
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     // OpenTelemetry Java Agent (download via Gradle, but activated via -javaagent)
-    otelAgent "io.opentelemetry.javaagent:opentelemetry-javaagent:2.24.0"
+    otelAgent "io.opentelemetry.javaagent:opentelemetry-javaagent:${otelAgentVersion}"
+
+    // Logback (for resilience4j)
+    implementation "net.logstash.logback:logstash-logback-encoder:7.4"
+
+    // resilience4j (for s3 upload)
+    implementation "io.github.resilience4j:resilience4j-spring-boot3:2.2.0"
+    implementation "io.github.resilience4j:resilience4j-micrometer:2.2.0"
+    implementation "org.springframework.boot:spring-boot-starter-aop"
+
 }
 
 tasks.named('test') {
@@ -69,10 +81,24 @@ tasks.named('test') {
 //    }
 }
 
+// Copy the resolved agent jar into build/otel/opentelemetry-javaagent.jar
 tasks.register("copyOtelAgent", Copy) {
-    from(configurations.otelAgent)
+    description = "Copies OpenTelemetry Java agent into build/otel/"
+    group = "otel"
+
+    from(configurations.otelAgent.singleFile)
     into(layout.buildDirectory.dir("otel"))
     rename { "opentelemetry-javaagent.jar" }
+}
+
+// Ensure the agent exists for jar packaging / docker builds
+tasks.named("bootJar") {
+    dependsOn("copyOtelAgent")
+}
+
+// If you run ./gradlew build, make sure the agent is copied as well
+tasks.named("build") {
+    dependsOn("copyOtelAgent")
 }
 
 tasks.named("bootRun") {

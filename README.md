@@ -41,7 +41,7 @@ and Micrometer-based metrics for monitoring job duration, success/failure rates,
 * GitHub Actions (CI)
 * Micrometer (metrics & observability,Timers, Counters, Running job gauges)
 * OpenTelemetry (Java Agent) + OTEL Collector + Jaeger (distributed tracing via OTLP)
-
+* Resilience4j(for S3 upload fault tolerance))
 
 ### 3. Project Structure
 (full structure is in project-structure.txt)
@@ -130,7 +130,7 @@ Export functionality is the primary focus of this project and demonstrates progr
   * Asynchronous writers
   * Temporary file merging
   * Payload abstraction for extensibility
-  * Upload to AWS S3  
+  * Upload to AWS S3  (with Resilience4j to retry failed uploads)
   * scheduled job execution
 
 
@@ -154,7 +154,9 @@ Export functionality is the primary focus of this project and demonstrates progr
 * Streaming XML generation (low memory footprint)
 * Job scheduling & execution tracking
 * S3 bucket upload and export storage
-
+* Fault Tolerance (Resilience4j for S3 upload)
+  “A fault-injection switch is available for local testing to trigger retry behavior.”
+* 
 This architecture mirrors real-world batch/export systems handling large datasets.
 
 #### Observability & Metrics
@@ -164,6 +166,7 @@ Export execution is instrumented using Micrometer metrics:
 * Timer (duration per phase: export / upload)
 * Counter (success / failure tracking with exception tagging)
 * Gauge (currently running jobs per client and job type)
+* In addition, Resilience4j metrics are exported via Micrometer/Prometheus (retry counts, circuit breaker state, bulkhead concurrency), enabling visibility into fault-tolerance behavior during S3 upload.
 
 Metrics are tagged by:
 * phase (export / upload)
@@ -194,7 +197,8 @@ This project supports distributed tracing for local debugging using OpenTelemetr
 - Jaeger UI: `16686`
 - Jaeger gRPC ingestion (from collector): `14250`
 
-> Note: This setup is intended for local development only (no auth / no persistence by default).
+> Note: This setup is intended for local development only (no auth / no persistence by default).> 
+
 
 In production, tracing should be configured via environment variables and proper security controls.
 
@@ -250,7 +254,7 @@ This ensures that test behavior closely matches production-like environments.
 * Flyway migrations
 * Integration tests with Testcontainers
 * CI pipeline
-
+* Resilience4j-based fault tolerance for S3 upload (retry/circuit-breaker/time-limiter/bulkhead)
 
  Work in progress:
 *  Category tree business logic
