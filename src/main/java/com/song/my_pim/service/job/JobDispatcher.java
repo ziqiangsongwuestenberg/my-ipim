@@ -18,7 +18,7 @@ public class JobDispatcher {
         }
     }
 
-    public String dispatch(JobEntity job) throws Exception {
+    public DispatchResult dispatch(JobEntity job) throws Exception {
         JobHandler handler = handlers.get(job.getJobType());
         if (handler == null) {
             throw new IllegalStateException("No handler for jobType=" + job.getJobType());

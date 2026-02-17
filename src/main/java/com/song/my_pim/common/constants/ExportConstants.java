@@ -26,4 +26,6 @@ public final class ExportConstants {
     public static final String EUR = "EUR";
     public static final String ATTR_REQUEST = "request";
     public static final String SYSTEM = "system";
+    public static final String JOB_HISTORY = "job_history";
+    public static final String CLIENT_ID = "clientId";
 }

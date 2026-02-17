@@ -2,12 +2,12 @@
 
     <!-- Reusable MDC fragments that output only when a value is available. -->
     <property name="MDC_FIELDS"
-              value="%replace(%X{trace_id}){'^(.+)$',' traceId=$1'}%replace(%X{span_id}){'^(.+)$',' spanId=$1'}%replace(%X{requestId}){'^(.+)$',' requestId=$1'}%replace(%X{clientId}){'^(.+)$',' clientId=$1'}%replace(%X{jobType}){'^(.+)$',' jobType=$1'}%replace(%X{s3Key}){'^(.+)$',' s3Key=$1'}%replace(%X{s3Bucket}){'^(.+)$',' s3Bucket=$1'}"/>
+              value="%replace(%X{trace_id}){'^(.+)$',' traceId=$1'}%replace(%X{span_id}){'^(.+)$',' spanId=$1'}%replace(%X{requestId}){'^(.+)$',' requestId=$1'}%replace(%X{clientId}){'^(.+)$',' clientId=$1'}%replace(%X{jobType}){'^(.+)$',' jobType=$1'}%replace(%X{jobId}){'^(.+)$',' jobId=$1'}%replace(%X{runId}){'^(.+)$',' runId=$1'}%replace(%X{eventId}){'^(.+)$',' eventId=$1'}%replace(%X{eventType}){'^(.+)$',' eventType=$1'}%replace(%X{attempt}){'^(.+)$',' attempt=$1'}%replace(%X{targetId}){'^(.+)$',' targetId=$1'}%replace(%X{targetType}){'^(.+)$',' targetType=$1'}%replace(%X{chunkId}){'^(.+)$',' chunkId=$1'}%replace(%X{s3Key}){'^(.+)$',' s3Key=$1'}%replace(%X{s3Bucket}){'^(.+)$',' s3Bucket=$1'}"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>
-                %d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{50} - %msg%property{MDC_FIELDS}%n%ex{30}
+                %d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{50} - %msg%replace(%property{MDC_FIELDS}){'(?i)^null$',''}%n%replace(%ex{30}){'(?s)^null$',''}
             </pattern>
         </encoder>
     </appender>

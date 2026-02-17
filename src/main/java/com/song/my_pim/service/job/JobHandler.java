@@ -11,5 +11,5 @@ public interface JobHandler {
      * Execute one job definition.
      * Return a JSON string to store in job_run.result_json
      */
-    String execute(JobEntity job) throws Exception;
+    DispatchResult execute(JobEntity job) throws Exception;
 }

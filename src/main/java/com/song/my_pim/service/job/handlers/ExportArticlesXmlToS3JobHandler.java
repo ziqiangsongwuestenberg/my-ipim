@@ -5,7 +5,9 @@ import com.song.my_pim.dto.exportjob.ArticleExportRequest;
 import com.song.my_pim.entity.job.JobEntity;
 import com.song.my_pim.entity.job.JobType;
 import com.song.my_pim.service.exportjob.ArticleAsyncExportJobService;
+import com.song.my_pim.service.job.DispatchResult;
 import com.song.my_pim.service.job.JobHandler;
+import com.song.my_pim.service.job.model.ArtifactInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
@@ -31,7 +33,7 @@ public class ExportArticlesXmlToS3JobHandler implements JobHandler {
     }
 
     @Override
-    public String execute(JobEntity job) throws Exception {
+    public DispatchResult execute(JobEntity job) throws Exception {
         MDC.put("jobType", supports().name());
         MDC.put("clientId", String.valueOf(job.getClientId()));
         MDC.put("jobId", String.valueOf(job.getId()));
@@ -48,9 +50,10 @@ public class ExportArticlesXmlToS3JobHandler implements JobHandler {
             log.info("job.completed");
 
             // store result_json (as JSON string)
-            return objectMapper.writeValueAsString(Map.of(
-                    "s3Uri", s3Uri
-            ));
+            String resultJson = objectMapper.writeValueAsString(Map.of("s3Uri", s3Uri));
+            ArtifactInfo artifact = new ArtifactInfo(s3Uri, null, null, "XML", "v1");
+
+            return new DispatchResult(resultJson, artifact);
         } catch (Exception ex) {
             log.error("job.failed", ex);
             throw ex;

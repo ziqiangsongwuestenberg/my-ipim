@@ -68,6 +68,9 @@ dependencies {
     implementation "io.github.resilience4j:resilience4j-micrometer:2.2.0"
     implementation "org.springframework.boot:spring-boot-starter-aop"
 
+    // for WebClient
+    implementation "org.springframework.boot:spring-boot-starter-webflux"
+
 }
 
 tasks.named('test') {

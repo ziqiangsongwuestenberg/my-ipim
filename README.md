@@ -9,8 +9,8 @@ This project is intentionally designed as a technical showcase focusing on backe
 Current primary functionality:
 Supports scheduled and REST-triggered export jobs with chunk-based parallel asynchronous processing,
 structured payload handling, XML generation, and S3 upload integration,
-and Micrometer-based metrics for monitoring job duration, success/failure rates, and running jobs.
-
+and Micrometer-based metrics for monitoring job duration, success/failure rates, and running jobs,
+**and asynchronous delivery via the Outbox pattern (ExportCompleted events) with Webhook push integration.**
 
 ### 1. Project Positioning
 * Senior Java Backend interview portfolio
@@ -41,7 +41,9 @@ and Micrometer-based metrics for monitoring job duration, success/failure rates,
 * GitHub Actions (CI)
 * Micrometer (metrics & observability,Timers, Counters, Running job gauges)
 * OpenTelemetry (Java Agent) + OTEL Collector + Jaeger (distributed tracing via OTLP)
-* Resilience4j(for S3 upload fault tolerance))
+* Resilience4j(for S3 upload fault tolerance)
+* Spring WebFlux WebClient (outbound webhook delivery)
+* Outbox Pattern (reliable event publishing)
 
 ### 3. Project Structure
 (full structure is in project-structure.txt)
@@ -159,6 +161,15 @@ Export functionality is the primary focus of this project and demonstrates progr
 * 
 This architecture mirrors real-world batch/export systems handling large datasets.
 
+#### Integration Delivery (Outbox + Webhook Push)
+* Export jobs produce an artifact (XML) and persist execution results in job_history (run tracking + artifact metadata).
+* On successful completion, an EXPORT_COMPLETED event is written to outbox_event (Outbox pattern).
+* A scheduled Outbox publisher worker polls due events and delivers them to configured delivery_targets.
+* Current adapter: Webhook (HTTP POST with event headers + JSON payload).
+* Payload includes job/run identifiers and the artifact URI (S3), enabling downstream systems to download the file (“pull”) after receiving the notification (“push”).
+
+This mirrors enterprise integration platforms: pull (S3 download) + push (webhook) + event-driven reliability (outbox).
+
 #### Observability & Metrics
 
 Export execution is instrumented using Micrometer metrics:
@@ -223,6 +234,29 @@ the final S3 location of the exported file.)
   * s3Uri – Location of the generated XML export in the S3 bucket
 
 
+Webhook Payload Example (ExportCompleted):
+```json
+{
+  "eventId": "...",
+  "eventType": "EXPORT_COMPLETED",
+  "occurredAt": "...",
+  "job": {
+    "jobId": 1,
+    "runId": 2,
+    "runUid": "...",
+    "jobType": "EXPORT_ARTICLES_XML_TO_S3",
+    "clientId": 12
+  },
+  "artifact": {
+    "uri": "s3://.../articles-....xml",
+    "format": "XML",
+    "schemaVersion": "v1"
+  },
+  "result": {
+    "s3Uri": "s3://..."
+  }
+}
+```
 ### 8. Testing & CI
 
 * Integration tests run against a real PostgreSQL instance using Testcontainers
@@ -267,6 +301,7 @@ This ensures that test behavior closely matches production-like environments.
 
 Ziqiang Song,
 Java Developer
+
 
 
 

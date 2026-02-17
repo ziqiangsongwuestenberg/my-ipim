@@ -30,8 +30,10 @@
     |   |               |       ExportJobProperties.java
     |   |               |       ExportJobThreadPoolConfig.java
     |   |               |       ExportJobThreadPoolProperties.java
+    |   |               |       HttpWebClientConfig.java
     |   |               |       JpaConfig.java
     |   |               |       S3Config.java
+    |   |               |       S3FaultProperties.java
     |   |               |       S3Properties.java
     |   |               |       SchedulingConfig.java
     |   |               |       WebConfig.java
@@ -52,9 +54,6 @@
     |   |               |       \---response
     |   |               |               ExportToS3Response.java
     |   |               |
-    |   |               +---monitoring
-    |   |               |       ExportJobMetrics.java
-    |   |               |
     |   |               +---entity
     |   |               |   +---article
     |   |               |   |       Article.java
@@ -69,13 +68,22 @@
     |   |               |   |       
     |   |               |   +---category
     |   |               |   |       CategoryNode.java
-    |   |               |   |       
+    |   |               |   |
+    |   |               |   +---delivery
+    |   |               |   |       DeliveryTargetEntity.java
+    |   |               |   |       DeliveryTargetType.java
+    |   |               |   |
     |   |               |   +---job
     |   |               |   |       JobEntity.java
     |   |               |   |       JobHistoryEntity.java
     |   |               |   |       JobStatus.java
     |   |               |   |       JobType.java
-    |   |               |   |       
+    |   |               |   |
+    |   |               |   +---outbox
+    |   |               |   |       OutboxEventEntity.java
+    |   |               |   |       OutboxEventStatus.java
+    |   |               |   |       OutboxEventType.java
+    |   |               |   |
     |   |               |   +---price
     |   |               |   |       ArticlePriceRel.java
     |   |               |   |       Price.java
@@ -84,7 +92,11 @@
     |   |               |           AppUser.java
     |   |               |           UserRight.java
     |   |               |           UserRole.java
-    |   |               |           
+    |   |               |
+    |   |               +---monitoring
+    |   |               |       ExportJobMetrics.java
+    |   |               |       S3FaultInjector.java
+    |   |               |
     |   |               +---repository
     |   |               |   |   ArticleAvRepository.java
     |   |               |   |   ArticlePriceRelRepository.java
@@ -93,9 +105,14 @@
     |   |               |   |   PriceRepository.java
     |   |               |   |   UserRepository.java
     |   |               |   |   
-    |   |               |   \---job
-    |   |               |           JobHistoryRepository.java
-    |   |               |           JobRepository.java
+    |   |               |   +---job
+    |   |               |   |       JobHistoryRepository.java
+    |   |               |   |       JobRepository.java
+    |   |               |   +---delivery
+    |   |               |   |       DeliveryTargetRepository.java
+    |   |               |   |
+    |   |               |   \---outbox
+    |   |               |           DeliveryTargetRepository.java
     |   |               |           
     |   |               +---service
     |   |               |   +---article
@@ -142,12 +159,26 @@
     |   |               |   |               XmlExportStreamWriter.java
     |   |               |   |               
     |   |               |   +---job
+    |   |               |   |   |   DispatchResult.java
     |   |               |   |   |   JobDispatcher.java
     |   |               |   |   |   JobHandler.java
     |   |               |   |   |   JobScheduler.java
     |   |               |   |   |   
-    |   |               |   |   \---handlers
-    |   |               |   |           ExportArticlesXmlToS3JobHandler.java
+    |   |               |   |   +---delivery
+    |   |               |   |   |       DeliveryAdapter.java
+    |   |               |   |   |       WebhookDeliveryAdapter.java
+    |   |               |   |   |
+    |   |               |   |   +---handlers
+    |   |               |   |   |       ExportArticlesXmlToS3JobHandler.java
+    |   |               |   |   |
+    |   |               |   |   +---model
+    |   |               |   |   |       ArtifactInfo.java
+    |   |               |   |   |
+    |   |               |   |   \---outbox
+    |   |               |   |           OutboxPayloadJsonFactory.java
+    |   |               |   |           OutboxPublisherScheduler.java
+    |   |               |   |           OutboxPublisherWorker.java
+    |   |               |   |           OutboxService.java
     |   |               |   |           
     |   |               |   \---userService
     |   |               |           UserService.java
@@ -167,8 +198,11 @@
     |   |                   +---exportArticle
     |   |                   |       ExportArticleController.java
     |   |                   |       
-    |   |                   \---importArticle
-    |   |                           ImportArticleController.java
+    |   |                   +---importArticle
+    |   |                   |       ImportArticleController.java
+    |   |                   |
+    |   |                   \---mock
+    |   |                           MockWebhookController.java
     |   |                           
     |   \---resources
     |       |   application-example.properties
@@ -176,11 +210,15 @@
     |       |   
     |       +---db
     |       |   +---data
-    |       |   |       v2__seed_base_data.sql
+    |       |   |       V2__seed_base_data.sql
+    |       |   |       V4__seed_job_table_data.sql
+    |       |   |       V8__seed_delivery_target_data.sql
     |       |   |       
     |       |   \---schema
     |       |           V1__create_tables.sql
     |       |           V3__job_scheduler_tables.sql
+    |       |           V5__outbox_event_tables.sql
+    |       |           V7__delivery_target_tables.sql
     |       |           
     |       +---static
     |       \---templates
