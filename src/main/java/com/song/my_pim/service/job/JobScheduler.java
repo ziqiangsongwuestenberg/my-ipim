@@ -20,7 +20,7 @@ public class JobScheduler {
     private final JobRepository jobRepository;
     private final JobExecutionService jobExecutionService;
     private final JdbcTemplate jdbcTemplate;
-
+    private static final int LOCK_NS_JOB = 1001;
     private final ZoneId zoneId = ZoneId.systemDefault();
 
     /**
@@ -43,9 +43,10 @@ public class JobScheduler {
         long lockKey = job.getId();
 
         Boolean locked = jdbcTemplate.queryForObject(
-                "select pg_try_advisory_lock(?)",
+                "select pg_try_advisory_lock(?,?)",
                 Boolean.class,
-                lockKey
+                LOCK_NS_JOB,
+                Math.toIntExact(lockKey)
         );
 
         if (locked == null || !locked) {
@@ -54,12 +55,17 @@ public class JobScheduler {
         }
 
         try {
+
             jobExecutionService.runJobTransactional(job.getId(), schedulerNow);
+
         } catch (Exception ex) {
             log.error("Job execution failed. jobId={}", job.getId(), ex);
         } finally {
             // always unlock
-            jdbcTemplate.queryForObject("select pg_advisory_unlock(?)", Boolean.class, lockKey);
+            jdbcTemplate.queryForObject("select pg_advisory_unlock(?,?)",
+                    Boolean.class,
+                    LOCK_NS_JOB,
+                    Math.toIntExact(lockKey));
         }
     }
 }

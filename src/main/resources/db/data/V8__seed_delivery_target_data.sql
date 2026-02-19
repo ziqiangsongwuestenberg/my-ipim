@@ -1,5 +1,6 @@
-INSERT INTO delivery_target (client_id, type, enabled, config_json, creation_time, update_time, creation_user, update_user)
+INSERT INTO delivery_target (target_key, client_id, type, enabled, config_json, creation_time, update_time, creation_user, update_user)
 VALUES (
+        'client-1001-webhook-main',
            12,
            'WEBHOOK',
            true,

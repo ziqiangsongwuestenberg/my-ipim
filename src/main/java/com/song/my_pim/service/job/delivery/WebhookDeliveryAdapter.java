@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.song.my_pim.entity.delivery.DeliveryTargetEntity;
 import com.song.my_pim.entity.delivery.DeliveryTargetType;
+import com.song.my_pim.entity.outbox.OutboxDeliveryEntity;
 import com.song.my_pim.entity.outbox.OutboxEventEntity;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
@@ -22,9 +23,13 @@ public class WebhookDeliveryAdapter implements DeliveryAdapter{
     public DeliveryTargetType type() { return DeliveryTargetType.WEBHOOK; }
 
     @Override
-    public void deliver(DeliveryTargetEntity deliveryTarget, OutboxEventEntity outboxEvent) throws Exception{
+    public void deliver(OutboxDeliveryEntity outboxDelivery) throws Exception{
+        DeliveryTargetEntity deliveryTarget = outboxDelivery.getTarget();
+        OutboxEventEntity outboxEvent = outboxDelivery.getOutboxEvent();
         JsonNode jsonTree = objectMapper.readTree(deliveryTarget.getConfigJson()); // String -> JsonNode
         String url = jsonTree.path("url").asText();
+        JsonNode payloadNode = objectMapper.readTree(outboxEvent.getPayloadJson());
+
 
         MDC.put("targetId", String.valueOf(deliveryTarget.getId()));
         MDC.put("targetType", String.valueOf(deliveryTarget.getType()));
@@ -46,7 +51,7 @@ public class WebhookDeliveryAdapter implements DeliveryAdapter{
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("X-Event-Id", String.valueOf(outboxEvent.getEventUid()))
                     .header("X-Event-Type", String.valueOf(outboxEvent.getEventType()))
-                    .bodyValue(outboxEvent.getPayloadJson()) //  String
+                    .bodyValue(payloadNode) //  String
                     .retrieve() // get ResponseSpec
                     .toBodilessEntity() //ResponseEntity
                     .block(); // synchronously waits for the reactive pipeline to complete and returns the result (or throws an error).

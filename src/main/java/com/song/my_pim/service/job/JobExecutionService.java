@@ -47,7 +47,7 @@ public class JobExecutionService {
         jobHistoryRepository.save(jobHistory);
 
         try {
-            DispatchResult dispatchResult = jobDispatcher.dispatch(job);
+            DispatchResult dispatchResult = jobDispatcher.dispatch(job); // JobHandler !!!
 
             jobHistory.setStatus(JobStatus.SUCCESS);
             jobHistory.setResultJson(dispatchResult.resultJson());
@@ -61,7 +61,7 @@ public class JobExecutionService {
                 jobHistory.setSchemaVersion(artifactInfo.schemaVersion());
             }
 
-            outboxService.enqueueExportCompleted(job, jobHistory, dispatchResult);
+            outboxService.enqueueExportCompleted(job, jobHistory, dispatchResult); // add to outboxEvent
         } catch (Exception ex) {
             jobHistory.setStatus(JobStatus.FAILED);
             jobHistory.setErrorMessage(shortMessage(ex));

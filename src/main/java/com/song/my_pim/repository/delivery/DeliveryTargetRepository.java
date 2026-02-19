@@ -12,4 +12,5 @@ public interface DeliveryTargetRepository extends JpaRepository<DeliveryTargetEn
 
     List<DeliveryTargetEntity> findByClientIdAndTypeAndEnabledTrue(Integer clientId,
                                                                     DeliveryTargetType type);
+    List<DeliveryTargetEntity> findByEnabledTrue();
 }

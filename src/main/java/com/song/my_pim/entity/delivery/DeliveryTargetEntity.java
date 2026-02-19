@@ -27,6 +27,9 @@ public class DeliveryTargetEntity extends BaseEntity {
     @Column(name = "client_id", nullable = false)
     private Integer clientId;
 
+    @Column(name = "target_key", nullable = false, length = 100)
+    private String targetKey;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 20)
     private DeliveryTargetType type;

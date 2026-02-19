@@ -1,6 +1,6 @@
 package com.song.my_pim.entity.outbox;
 
-public enum OutboxEventStatus {
+public enum OutboxDeliveryStatus {
     NEW,
     PROCESSING,
     SENT,

@@ -16,18 +16,24 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExportJobContext {
-
+    @NonNull
     private String jobId;
+
+    @NonNull
     private Integer client;
 
+    @NonNull
     private int chunkParts;
 
     // payload
+    @NonNull
     private String filePrefix;
 
-    private Instant startTime;
+    @Builder.Default
+    private Instant startTime = Instant.now();
 
     //Each job dynamically generated
+    @NonNull
     private Path payloadDir;
 
     // final merged file for export
@@ -39,6 +45,7 @@ public class ExportJobContext {
     private Map<String, Object> attributes = new HashMap<>();
 
     @JsonIgnore
+    @NonNull
     private ExportJobPayloadHandler payloadHandler;
 
     public <T> T getAttr(String key, Class<T> type) {

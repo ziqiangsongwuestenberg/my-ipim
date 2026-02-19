@@ -123,7 +123,6 @@ public class ArticleAsyncExportJobService implements XmlExportJob{
                 .client(client)
                 .chunkParts(exportJobProperties.getChunkParts() > 0 ? exportJobProperties.getChunkParts() : 4)
                 .filePrefix("articles-export")
-                .startTime(Instant.now())
                 .payloadDir(payloadDir)
                 .payloadHandler(payloadHandler)
                 .build();

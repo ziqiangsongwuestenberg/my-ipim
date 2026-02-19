@@ -15,7 +15,6 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
@@ -44,27 +43,10 @@ public class OutboxEventEntity extends BaseEntity {
     @Column(name = "payload_json", nullable = false, columnDefinition = "jsonb")
     private String payloadJson;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private OutboxEventStatus status = OutboxEventStatus.NEW;
-
-    @Column(name = "attempt_count", nullable = false)
-    private Integer attemptCount = 0;
-
-    @Column(name = "next_retry_at")
-    private OffsetDateTime nextRetryAt;
-
-    @Column(name = "last_error", columnDefinition = "text")
-    private String lastError;
-
-    @Column(name = "sent_at")
-    private OffsetDateTime sentAt;
 
     @PrePersist
     void prePersist() {
         if (eventUid == null) eventUid = UUID.randomUUID();
-        if (status == null) status = OutboxEventStatus.NEW;
-        if (attemptCount == null) attemptCount = 0;
         if (payloadJson == null) payloadJson = "{}";
     }
 }
