@@ -1,7 +1,5 @@
 package com.song.my_pim.service.job.outbox;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.song.my_pim.common.constants.ExportConstants;
 import com.song.my_pim.entity.delivery.DeliveryTargetEntity;
 import com.song.my_pim.entity.delivery.DeliveryTargetType;
@@ -21,7 +19,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class OutboxPublisherWorker {
+public class OutboxPushWorker {
     private static final int BATCH_SIZE = 20;
     private static final int MAX_ATTEMPTS = 10;
     private static final int LEASE_SECONDS = 60;
@@ -29,8 +27,7 @@ public class OutboxPublisherWorker {
     private final Map<DeliveryTargetType, DeliveryAdapter> targetTypeToDeliveryAdapterMap = new EnumMap<>(DeliveryTargetType.class);
     private final OutboxDeliveryRepository outboxDeliveryRepository;
 
-    public OutboxPublisherWorker(
-            ObjectMapper objectMapper,
+    public OutboxPushWorker(
             List<DeliveryAdapter> adapterList,
             OutboxDeliveryRepository outboxDeliveryRepository) {
 
@@ -43,16 +40,19 @@ public class OutboxPublisherWorker {
     // claim -> fetch -> process
     @Transactional
     public void publishDueEvents(long targetId) {
-        //claim
+        //claim : status IN ('NEW','FAILED') / ('PROCESSING' && claimed_until < now()) -> last time failed
         List<Long> deliveryIds = outboxDeliveryRepository.claimDueDeliveryIds(
                 targetId,
                 ExportConstants.SYSTEM,
                 LEASE_SECONDS,
                 BATCH_SIZE
         );
-        if (deliveryIds.isEmpty()) return;
+        if (deliveryIds.isEmpty()) {
+            log.info("No delivery item found for publishing for targetId: {}", targetId);
+            return;
+        }
 
-        // fetch : status IN ('NEW','FAILED') / ('PROCESSING' && claimed_until < now()) -> last time failed
+        // fetch : by targetId and status
         List<OutboxDeliveryEntity> outboxDeliveries = outboxDeliveryRepository.findAllByIds(deliveryIds);
 
         for (OutboxDeliveryEntity d : outboxDeliveries) {
@@ -69,7 +69,8 @@ public class OutboxPublisherWorker {
         try {
 
             DeliveryTargetEntity target = outboxDelivery.getTarget();
-                    ;
+
+            log.info("Start to push to targetId={} , client={}", target.getTargetKey(), target.getClientId());
             MDC.put(ExportConstants.CLIENT_ID, String.valueOf(target.getClientId()));
             MDC.put("targetId", String.valueOf(target.getId()));
             MDC.put("targetType", String.valueOf(target.getType()));
@@ -101,6 +102,9 @@ public class OutboxPublisherWorker {
         outboxDelivery.setUpdateUser(ExportConstants.SYSTEM);
         outboxDelivery.setUpdateTime(OffsetDateTime.now());
         outboxDeliveryRepository.save(outboxDelivery);
+        log.info("Outbox event SENT. eventId={}, target={}",
+                outboxDelivery.getOutboxEvent().getEventUid(),
+                outboxDelivery.getTarget().getTargetKey());
     }
 
     private void markOutboxDeliveryOnFailure(OutboxDeliveryEntity outboxDelivery, Exception exception) {

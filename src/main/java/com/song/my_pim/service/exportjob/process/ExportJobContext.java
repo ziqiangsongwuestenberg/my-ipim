@@ -22,7 +22,6 @@ public class ExportJobContext {
     @NonNull
     private Integer client;
 
-    @NonNull
     private int chunkParts;
 
     // payload

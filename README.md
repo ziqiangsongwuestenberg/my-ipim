@@ -10,7 +10,7 @@ Current primary functionality:
 Supports scheduled and REST-triggered export jobs with chunk-based parallel asynchronous processing,
 structured payload handling, XML generation, and S3 upload integration,
 and Micrometer-based metrics for monitoring job duration, success/failure rates, and running jobs,
-**and asynchronous delivery via the Outbox pattern (ExportCompleted events) with Webhook push integration.**
+**and reliable asynchronous event delivery via the Outbox pattern, supporting both Webhook push and API-based pull modes.**
 
 ### 1. Project Positioning
 * Senior Java Backend interview portfolio
@@ -43,7 +43,10 @@ and Micrometer-based metrics for monitoring job duration, success/failure rates,
 * OpenTelemetry (Java Agent) + OTEL Collector + Jaeger (distributed tracing via OTLP)
 * Resilience4j(for S3 upload fault tolerance)
 * Spring WebFlux WebClient (outbound webhook delivery)
-* Outbox Pattern (reliable event publishing)
+* Outbox Pattern (reliable event publishing and delivery)
+  * Supports push (Webhook) 
+  * Supports pull (API) consumption modes
+  * PostgreSQL-based claim/lease processing (`FOR UPDATE SKIP LOCKED`)
 
 ### 3. Project Structure
 (full structure is in project-structure.txt)
@@ -83,7 +86,11 @@ Core Domains
   * Tree schema designed but business logic not yet implemented
 * User / Role / Right (prepared)
   * Schema prepared for future security integration
-
+* Integration / Delivery
+  * Outbox-based event publishing (ExportCompleted events)
+  * Configurable delivery targets (Webhook)
+  * Lease-based claiming
+  * Supports both push delivery (webhook) and pull consumption (API)
 
 
 ### 5. Database Design
@@ -144,9 +151,9 @@ Export functionality is the primary focus of this project and demonstrates progr
 
 
 * 3. Simple paged export
-* Articles with attributes
-* No pricing
-* Page-based processing
+  * Articles with attributes
+  * No pricing
+  * Page-based processing
   
 #### Key Components :
 
@@ -161,12 +168,13 @@ Export functionality is the primary focus of this project and demonstrates progr
 * 
 This architecture mirrors real-world batch/export systems handling large datasets.
 
-#### Integration Delivery (Outbox + Webhook Push)
+#### Integration Delivery (Outbox + Webhook Push + Pull)
 * Export jobs produce an artifact (XML) and persist execution results in job_history (run tracking + artifact metadata).
 * On successful completion, an EXPORT_COMPLETED event is written to outbox_event (Outbox pattern).
 * A scheduled Outbox publisher worker polls due events and delivers them to configured delivery_targets.
-* Current adapter: Webhook (HTTP POST with event headers + JSON payload).
+* In addition to push mode, a Pull API allows consumers to claim pending deliveries, acknowledge (ACK) or negatively acknowledge (NACK) them, enabling controlled, consumer-driven event processing.
 * Payload includes job/run identifiers and the artifact URI (S3), enabling downstream systems to download the file (“pull”) after receiving the notification (“push”).
+
 
 This mirrors enterprise integration platforms: pull (S3 download) + push (webhook) + event-driven reliability (outbox).
 
@@ -289,6 +297,7 @@ This ensures that test behavior closely matches production-like environments.
 * Integration tests with Testcontainers
 * CI pipeline
 * Resilience4j-based fault tolerance for S3 upload (retry/circuit-breaker/time-limiter/bulkhead)
+* Event delivery via Outbox pattern (push + pull)
 
  Work in progress:
 *  Category tree business logic

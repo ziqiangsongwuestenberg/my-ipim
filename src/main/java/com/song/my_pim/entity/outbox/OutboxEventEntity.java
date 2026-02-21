@@ -1,5 +1,6 @@
 package com.song.my_pim.entity.outbox;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.song.my_pim.entity.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,12 +42,11 @@ public class OutboxEventEntity extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload_json", nullable = false, columnDefinition = "jsonb")
-    private String payloadJson;
+    private JsonNode payloadJson;
 
 
     @PrePersist
     void prePersist() {
         if (eventUid == null) eventUid = UUID.randomUUID();
-        if (payloadJson == null) payloadJson = "{}";
     }
 }

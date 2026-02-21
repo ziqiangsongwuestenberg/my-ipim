@@ -39,7 +39,7 @@ public class ExportArticlesXmlToS3JobHandler implements JobHandler {
         MDC.put("jobId", String.valueOf(job.getId()));
 
         try {
-            log.info("job.started");
+            log.info("Export job started!!!");
 
             // params_json -> ArticleExportRequest
             ArticleExportRequest request = objectMapper.readValue(job.getParamsJson(), ArticleExportRequest.class);

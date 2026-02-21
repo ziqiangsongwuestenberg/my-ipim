@@ -9,15 +9,15 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/mock")
-public class MockWebhookController {
+public class MockWebhookEndPoint3ForPushController {
 
-    @PostMapping("/webhook")
+    @PostMapping("/webhook3")
     public ResponseEntity<String> receive(
             @RequestBody(required = false) String body,
             @RequestHeader Map<String, String> headers
     ) {
-        log.info("Mock webhook received. headers={}", headers);
-        log.info("Mock webhook body={}", body);
+        log.info("Mock webhook3 received. headers={}", headers);
+        log.info("Mock webhook3 body={}", body);
         return ResponseEntity.ok("ok");
     }
 }

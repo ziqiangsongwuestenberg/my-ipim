@@ -40,7 +40,7 @@ public class OutboxService {
         outboxEvent.setAggregateId(jobHistory.getId());
         outboxEvent.setEventType(OutboxEventType.EXPORT_COMPLETED);
         JsonNode payload = outboxPayloadJsonFactory.exportCompleted(eventUid, job, jobHistory, dispatchResult);
-        outboxEvent.setPayloadJson(payload.toString());
+        outboxEvent.setPayloadJson(payload);
         // audit
         outboxEvent.setCreationUser(ExportConstants.SYSTEM);
         outboxEvent.setUpdateUser(ExportConstants.SYSTEM);

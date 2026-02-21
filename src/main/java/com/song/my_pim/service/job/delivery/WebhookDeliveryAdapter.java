@@ -28,7 +28,7 @@ public class WebhookDeliveryAdapter implements DeliveryAdapter{
         OutboxEventEntity outboxEvent = outboxDelivery.getOutboxEvent();
         JsonNode jsonTree = objectMapper.readTree(deliveryTarget.getConfigJson()); // String -> JsonNode
         String url = jsonTree.path("url").asText();
-        JsonNode payloadNode = objectMapper.readTree(outboxEvent.getPayloadJson());
+        JsonNode payloadNode = outboxEvent.getPayloadJson();
 
 
         MDC.put("targetId", String.valueOf(deliveryTarget.getId()));

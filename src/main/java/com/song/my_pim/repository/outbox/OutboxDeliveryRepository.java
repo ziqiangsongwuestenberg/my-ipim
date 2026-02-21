@@ -1,5 +1,6 @@
 package com.song.my_pim.repository.outbox;
 
+import com.song.my_pim.dto.outbox.OutboxDeliveryItemDto;
 import com.song.my_pim.entity.outbox.OutboxDeliveryEntity;
 import com.song.my_pim.entity.outbox.OutboxDeliveryStatus;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +53,7 @@ public interface  OutboxDeliveryRepository extends JpaRepository<OutboxDeliveryE
             AND (
               d.status IN ('NEW','FAILED')
               OR (d.status = 'PROCESSING' AND d.claimed_until IS NOT NULL AND d.claimed_until < now()) -- last time failed
+              OR (d.status = 'PROCESSING' AND d.claimed_until IS NULL) -- released by scheduled job
             )
             AND (d.next_retry_at IS NULL OR d.next_retry_at <= now())
           ORDER BY d.id
@@ -87,10 +89,12 @@ public interface  OutboxDeliveryRepository extends JpaRepository<OutboxDeliveryE
         WITH cte AS (
             SELECT d.id
             FROM outbox_delivery d
-            WHERE d.target_id = :targetId
+            JOIN delivery_target t on d.target_id = t.id
+            WHERE (:targetKey IS NULL or t.target_key = :targetKey)
               AND (
-                    d.status = 'NEW'
-                    OR (d.status = 'CLAIMED' AND d.claimed_until IS NOT NULL AND d.claimed_until < now())
+                    d.status IN ('NEW','FAILED')
+                    OR (d.status = 'PROCESSING' AND d.claimed_until IS NOT NULL AND d.claimed_until < now()) -- last time failed
+                    OR (d.status = 'PROCESSING' AND d.claimed_until IS NULL) -- released by scheduled job
                   )
               AND (d.next_retry_at IS NULL OR d.next_retry_at <= now())
             ORDER BY d.id
@@ -98,19 +102,19 @@ public interface  OutboxDeliveryRepository extends JpaRepository<OutboxDeliveryE
             LIMIT :limit
         )
         UPDATE outbox_delivery d
-        SET status = 'CLAIMED',
-            claimed_by = :consumerId,
+        SET status = 'PROCESSING',
+            claimed_by = :user,
             claimed_until = now() + (:leaseSeconds || ' seconds')::interval,
-            attempt_count = d.attempt_count + 1,
+          --attempt_count = d.attempt_count ,
             update_time = now(),
-            update_user = :consumerId
+            update_user = :user
         FROM cte
         WHERE d.id = cte.id
         RETURNING d.id
         """, nativeQuery = true)
-    List<Long> claimBatch(
-            @Param("targetId") long targetId,
-            @Param("consumerId") String consumerId,
+    List<Long> claimBatchForPull(
+            @Param("targetKey") String targetKey,
+            @Param("user") String user,
             @Param("leaseSeconds") int leaseSeconds,
             @Param("limit") int limit
     );
@@ -118,49 +122,39 @@ public interface  OutboxDeliveryRepository extends JpaRepository<OutboxDeliveryE
     @Modifying
     @Query(value = """
         UPDATE outbox_delivery
-        SET status = 'DELIVERED',
+        SET status = 'SENT',
             delivered_at = now(),
             claimed_by = null,
             claimed_until = null,
             last_error = null,
             next_retry_at = null,
             update_time = now(),
-            update_user = :actor
-        WHERE target_id = :targetId
-          AND claimed_by = :consumerId
-          AND status = 'CLAIMED'
+            update_user = :user
+        WHERE 
+              claimed_by = :user
+          AND claimed_until > now()
+          AND status = 'PROCESSING'
           AND id IN (:ids)
         """, nativeQuery = true)
-    int ack(
-            @Param("targetId") long targetId,
-            @Param("consumerId") String consumerId,
-            @Param("ids") Collection<Long> ids,
-            @Param("actor") String actor
+    int ackForPull(
+            @Param("user") String user,
+            @Param("ids") Collection<Long> ids
     );
 
-    @Modifying
     @Query(value = """
-        UPDATE outbox_delivery
-        SET status = 'NEW',
-            claimed_by = null,
-            claimed_until = null,
-            last_error = :error,
-            next_retry_at = :nextRetryAt,
-            update_time = now(),
-            update_user = :actor
-        WHERE target_id = :targetId
-          AND claimed_by = :consumerId
-          AND status = 'CLAIMED'
-          AND id IN (:ids)
-        """, nativeQuery = true)
-    int nackRetryLater(
-            @Param("targetId") long targetId,
-            @Param("consumerId") String consumerId,
-            @Param("ids") Collection<Long> ids,
-            @Param("error") String error,
-            @Param("nextRetryAt") OffsetDateTime nextRetryAt,
-            @Param("actor") String actor
-    );
+        SELECT NEW com.song.my_pim.dto.outbox.OutboxDeliveryItemDto(
+            d.id,
+            d.attemptCount,
+            d.claimedUntil,
+            e.eventUid,
+            e.eventType,
+            e.payloadJson)     
+        FROM OutboxDeliveryEntity d
+        JOIN d.outboxEvent e
+        WHERE d.id IN :deliveryIds
+        ORDER BY d.id
+            """)
+    List<OutboxDeliveryItemDto> findDeliveryItemByIdsForPull(@Param("deliveryIds") Collection<Long> deliveryIds);
 
     @Modifying
     @Query(value = """
@@ -168,19 +162,37 @@ public interface  OutboxDeliveryRepository extends JpaRepository<OutboxDeliveryE
         SET status = 'DEAD',
             claimed_by = null,
             claimed_until = null,
-            last_error = :error,
+            last_error = :lastError,
+            next_retry_at = null,
             update_time = now(),
-            update_user = :actor
-        WHERE target_id = :targetId
-          AND claimed_by = :consumerId
-          AND status = 'CLAIMED'
+            update_user = :user
+        WHERE 
+              claimed_by = :user
+          AND claimed_until > now()
+          AND status = 'PROCESSING'
           AND id IN (:ids)
         """, nativeQuery = true)
-    int nackDead(
-            @Param("targetId") long targetId,
-            @Param("consumerId") String consumerId,
+    int nackForPull(
+            @Param("user") String user,
             @Param("ids") Collection<Long> ids,
-            @Param("error") String error,
-            @Param("actor") String actor
+            @Param("lastError") String lastError
     );
+
+
+    /**
+     * I keep status = 'PROCESSING' here, because in PUSH and PULL process they still taking the outbox delivery items with (status = 'PROCESSING' AND claimed_until IS NOT NULL AND claimed_until < now())
+     */
+    @Modifying
+    @Query(value = """
+        UPDATE outbox_delivery
+        SET 
+            claimed_by = NULL,
+            claimed_until = NULL,
+            update_time = now(),
+            update_user = :user
+        WHERE status = 'PROCESSING'
+        AND claimed_until IS NOT NULL
+        AND claimed_until < now()
+        """, nativeQuery = true)
+    int releaseExpiredLeases(@Param("user") String user);
 }
